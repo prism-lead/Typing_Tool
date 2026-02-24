@@ -15,19 +15,10 @@
   ss:hideProgressBar="1"
   state="testing">
 
-<!-- ================================================================== -->
-<!-- PRISM SURVEY ENGINE — Phase 1 Module                               -->
-<!-- Standalone Decipher XML module for PRISM segment assignment         -->
-<!-- ================================================================== -->
-
-<!-- Configuration flag: set to 1 for standalone survey with segment reveal -->
 <exec when="init">
 standalone_mode = 0
 </exec>
 
-<!-- ================================================================== -->
-<!-- INITIALIZATION: Load MaxDiff designs and define helper functions    -->
-<!-- ================================================================== -->
 <exec when="init">
 import math
 
@@ -180,16 +171,11 @@ SEGMENT_ABBREVS = {
 }
 </exec>
 
-<!-- Load MaxDiff design files -->
 <exec when="init">
 GOP_DESIGN = setupMaxDiffFile("GOPDesign.dat")
 DEM_DESIGN = setupMaxDiffFile("DemDesign.dat")
 </exec>
 
-
-<!-- ================================================================== -->
-<!-- WELCOME SCREEN                                                     -->
-<!-- ================================================================== -->
 <html label="welcome_screen" where="survey" ss:questionClassNames="prism-welcome">
   <p class="prism-logo-wrap">
     <img src="[survey]PRISM glyph.svg" alt="PRISM" class="prism-logo" />
@@ -197,24 +183,17 @@ DEM_DESIGN = setupMaxDiffFile("DemDesign.dat")
   <p class="prism-intro-text">
     Thanks for taking part. This survey helps us understand how
     people think about health care and public policy today. There are
-    no right or wrong answers &mdash; we&rsquo;re interested in your point of view.
-    Let&rsquo;s begin.
+    no right or wrong answers -- we're interested in your point of view.
+    Let's begin.
   </p>
 </html>
 
 <suspend/>
 
-
-<!-- ================================================================== -->
-<!-- SCREENER: SECTION 1 — BACKGROUND INFO                             -->
-<!-- ================================================================== -->
-
-<!-- Section header (rendered via CSS) -->
 <html label="section_header_1" where="survey" ss:questionClassNames="prism-section-hdr">
   <p class="prism-section-label">SECTION 1: BACKGROUND INFO</p>
 </html>
 
-<!-- Q1: Voter Registration — HORIZONTAL RADIO PILLS -->
 <radio label="qvote" atleast="1"
        ss:questionClassNames="prism-hpill">
   <title><strong>Are you registered to vote?</strong></title>
@@ -228,7 +207,6 @@ DEM_DESIGN = setupMaxDiffFile("DemDesign.dat")
 
 <term label="Term_qvote" cond="qvote.r2 or qvote.r3">Thank you for your interest, but this survey is for registered U.S. voters only.</term>
 
-<!-- Q2: ZIP Code — DIGIT BOX PATTERN -->
 <text label="qzip" optional="0" size="5" verify="zipcode"
       ss:questionClassNames="prism-digitbox">
   <title><strong>Please enter your 5-digit Zip Code</strong></title>
@@ -240,7 +218,6 @@ DEM_DESIGN = setupMaxDiffFile("DemDesign.dat")
 
 <term label="Term_qzip" cond="qzip.r99 or qzip.val == ''">Thank you, but we need a valid ZIP code to continue.</term>
 
-<!-- Q3: Age — DIGIT BOX PATTERN (direct age, not birth year) -->
 <number label="qage" size="3" verify="range(18,99)"
         ss:questionClassNames="prism-digitbox">
   <title><strong>What is your age?</strong></title>
@@ -252,7 +229,6 @@ DEM_DESIGN = setupMaxDiffFile("DemDesign.dat")
 
 <term label="Term_qage" cond="qage.r99">Thank you, but we need your age to continue.</term>
 
-<!-- Q4: Gender — HORIZONTAL RADIO PILLS -->
 <radio label="qgender" atleast="1"
        ss:questionClassNames="prism-hpill">
   <title><strong>What is your gender?</strong></title>
@@ -265,7 +241,6 @@ DEM_DESIGN = setupMaxDiffFile("DemDesign.dat")
 
 <suspend/>
 
-<!-- Q5: 2024 Vote — CUSTOM.BALLOT LAYOUT -->
 <radio label="q2024vote" atleast="1"
        ss:questionClassNames="prism-ballot">
   <title><strong>Who did you vote for in the latest (2024) Presidential election?</strong></title>
@@ -281,7 +256,6 @@ DEM_DESIGN = setupMaxDiffFile("DemDesign.dat")
 
 <term label="Term_q2024vote" cond="q2024vote.r4 or q2024vote.r99">Thank you, but we need to know about your 2024 vote to continue.</term>
 
-<!-- Q6: Party ID Level 1 — CUSTOM.PARTYID with party icons -->
 <radio label="qparty1" atleast="1"
        ss:questionClassNames="prism-partyid">
   <title><strong>In politics today, do you consider yourself a...?</strong></title>
@@ -296,7 +270,6 @@ DEM_DESIGN = setupMaxDiffFile("DemDesign.dat")
 
 <term label="Term_qparty1" cond="qparty1.r99">Thank you for your interest, but we need this information to continue.</term>
 
-<!-- Q6b: Party ID Level 2 — Strength (pill buttons) -->
 <radio label="qparty2" atleast="1" cond="qparty1.r1 or qparty1.r2"
        ss:questionClassNames="prism-pill">
   <title>Would you say you are a strong or not-so-strong <suspend/>
@@ -311,7 +284,6 @@ DEM_DESIGN = setupMaxDiffFile("DemDesign.dat")
 
 <suspend/>
 
-<!-- Q6c: Party ID Level 2 — Independent lean (CUSTOM.PARTYID) -->
 <radio label="qparty3" atleast="1" cond="qparty1.r3"
        ss:questionClassNames="prism-partyid">
   <title><strong>Do you lean toward the...?</strong></title>
@@ -323,16 +295,12 @@ DEM_DESIGN = setupMaxDiffFile("DemDesign.dat")
 
 <suspend/>
 
-<!-- Privacy footer (rendered on all screener pages via CSS) -->
 <html label="privacy_footer" where="survey" ss:questionClassNames="prism-footer">
   <p class="prism-privacy">Your responses are held strictly confidential. See our Privacy Policy and commitment to protect all information and things.</p>
 </html>
 
 <suspend/>
 
-<!-- ================================================================== -->
-<!-- COMPUTED: 7-point party identification scale                       -->
-<!-- ================================================================== -->
 <exec>
 # Derive qparty: 7-point scale (1=Strong R ... 7=Strong D)
 # 1 = Strong Republican
@@ -373,10 +341,6 @@ qparty.val = qparty_val
   <comment>1=Strong R, 2=Weak R, 3=Lean R, 4=Indep, 5=Lean D, 6=Weak D, 7=Strong D</comment>
 </number>
 
-<!-- ================================================================== -->
-<!-- COMPUTED: TYPING_MODULE assignment                                 -->
-<!-- r1=GOP only, r2=DEM only, r3=Both                                 -->
-<!-- ================================================================== -->
 <radio label="TYPING_MODULE" optional="1" where="execute,survey,report">
   <title>Typing Module Assignment</title>
   <row label="r1">GOP Model Only</row>
@@ -416,28 +380,24 @@ elif q2024vote.r3:
 
 <suspend/>
 
-
-<!-- ================================================================== -->
-<!-- MAXDIFF INTRO PAGE                                                 -->
-<!-- ================================================================== -->
 <html label="maxdiff_intro" where="survey" ss:questionClassNames="prism-md-intro"
       cond="TYPING_MODULE.r1 or TYPING_MODULE.r2 or TYPING_MODULE.r3">
   <p class="prism-logo-wrap">
     <img src="[survey]PRISM glyph.svg" alt="PRISM" class="prism-logo-sm" />
   </p>
   <p class="prism-intro-text">
-    In this section we&rsquo;ll ask about a mix of political and social issues.
+    In this section we'll ask about a mix of political and social issues.
     Some questions may feel personal, and some statements you may
     agree with strongly and others not so much. Please just go with your
-    first reaction &mdash; there are no right or wrong answers.
+    first reaction -- there are no right or wrong answers.
   </p>
   <p class="prism-intro-text">
-    You&rsquo;ll see a series of cards, each with four or five statements. On each
+    You'll see a series of cards, each with four or five statements. On each
     card, choose the one that sounds <strong>most</strong> like you and the one that
     sounds <strong>least</strong> like you.
   </p>
   <p class="prism-intro-text">
-    <em>Some statements may show up again later &mdash; that&rsquo;s intentional. There are no
+    <em>Some statements may show up again later -- that's intentional. There are no
     right or wrong answers; go with the statement that best matches your
     own point of view.</em>
   </p>
@@ -445,16 +405,9 @@ elif q2024vote.r3:
 
 <suspend/>
 
-
-<!-- ================================================================== -->
-<!-- GOP MAXDIFF BLOCK                                                  -->
-<!-- Condition: TYPING_MODULE = r1 (GOP only) or r3 (Both)             -->
-<!-- 11 items x 11 tasks x 5 items/task                                -->
-<!-- ================================================================== -->
 <block label="GOPBlock" cond="TYPING_MODULE.r1 or TYPING_MODULE.r3">
 
-  <!-- Version assignment via quota -->
-  <quota label="GOP_Version_Quota" sheet="gop_version" overquota="noqual" usecond="0">
+    <quota label="GOP_Version_Quota" sheet="gop_version" overquota="noqual" usecond="0">
     <title>GOP MaxDiff Version Assignment</title>
     <row label="r1" cond="1" limit="0">Version 1</row>
     <row label="r2" cond="1" limit="0">Version 2</row>
@@ -499,8 +452,7 @@ XGOP_VERSION.val = gop_version
 
   <suspend/>
 
-  <!-- GOP MaxDiff Loop: 11 tasks -->
-  <loop label="GOP_MD_Loop" vars="GOP_MD_T" randomize="0" iterator="leasttaken">
+    <loop label="GOP_MD_Loop" vars="GOP_MD_T" randomize="0" iterator="leasttaken">
     <block label="b1">
       <radio label="GOP_MD_T" atleast="1" adim="cols" grouping="cols" shuffle="rows"
              ss:listDisplay="0" ss:questionClassNames="prism-maxdiff" unique="1">
@@ -580,8 +532,7 @@ XGOP_VERSION.val = gop_version
 ]]></style>
       </radio>
 
-      <!-- Set up items per task -->
-      <exec when="init">
+            <exec when="init">
 setupMaxDiffItemsI(GOP_DESIGN, gop_version, loopvar.GOP_MD_Loop.index + 1, GOP_MD_T)
 </exec>
 
@@ -601,10 +552,7 @@ setupMaxDiffItemsI(GOP_DESIGN, gop_version, loopvar.GOP_MD_Loop.index + 1, GOP_M
     <looprow label="l11">Task 11</looprow>
   </loop>
 
-  <!-- ============================================================== -->
-  <!-- GOP: B-W Score Computation                                     -->
-  <!-- ============================================================== -->
-  <text label="XGOP_BW" where="execute,survey,report" optional="1"
+        <text label="XGOP_BW" where="execute,survey,report" optional="1"
         title="GOP Best-Worst Raw Scores">
     <row label="r1">r1 Marriage/Family</row>
     <row label="r2">r2 Pharma Distrust</row>
@@ -641,10 +589,7 @@ for rl in gop_item_labels:
     setattr(XGOP_BW, rl, {'c1': str(gop_bw[rl])})
 </exec>
 
-  <!-- ============================================================== -->
-  <!-- GOP: Z-Standardization and Centroid Distance Computation       -->
-  <!-- ============================================================== -->
-  <text label="XGOP_RAW" where="execute,survey,report" optional="1"
+        <text label="XGOP_RAW" where="execute,survey,report" optional="1"
         title="GOP Centroid Squared Distances">
     <row label="r1">CEC</row>
     <row label="r2">HHN</row>
@@ -732,16 +677,9 @@ XGOP_SEG_FINAL_2.val = gop_seg_labels[gop_sorted[1]]
 
 </block>
 
-
-<!-- ================================================================== -->
-<!-- DEM MAXDIFF BLOCK                                                  -->
-<!-- Condition: TYPING_MODULE = r2 (DEM only) or r3 (Both)             -->
-<!-- 8 items x 8 tasks x 4 items/task                                  -->
-<!-- ================================================================== -->
 <block label="DEMBlock" cond="TYPING_MODULE.r2 or TYPING_MODULE.r3">
 
-  <!-- Version assignment via quota -->
-  <quota label="DEM_Version_Quota" sheet="dem_version" overquota="noqual" usecond="0">
+    <quota label="DEM_Version_Quota" sheet="dem_version" overquota="noqual" usecond="0">
     <title>DEM MaxDiff Version Assignment</title>
     <row label="r1" cond="1" limit="0">Version 1</row>
     <row label="r2" cond="1" limit="0">Version 2</row>
@@ -786,8 +724,7 @@ XDEM_VERSION.val = dem_version
 
   <suspend/>
 
-  <!-- DEM MaxDiff Loop: 8 tasks -->
-  <loop label="DEM_MD_Loop" vars="DEM_MD_T" randomize="0" iterator="leasttaken">
+    <loop label="DEM_MD_Loop" vars="DEM_MD_T" randomize="0" iterator="leasttaken">
     <block label="b1">
       <radio label="DEM_MD_T" atleast="1" adim="cols" grouping="cols" shuffle="rows"
              ss:listDisplay="0" ss:questionClassNames="prism-maxdiff" unique="1">
@@ -881,10 +818,7 @@ setupMaxDiffItemsI(DEM_DESIGN, dem_version, loopvar.DEM_MD_Loop.index + 1, DEM_M
     <looprow label="l8">Task 8</looprow>
   </loop>
 
-  <!-- ============================================================== -->
-  <!-- DEM: B-W Score Computation                                     -->
-  <!-- ============================================================== -->
-  <text label="XDEM_BW" where="execute,survey,report" optional="1"
+        <text label="XDEM_BW" where="execute,survey,report" optional="1"
         title="DEM Best-Worst Raw Scores">
     <row label="r1">r1 Tech/Data Equity</row>
     <row label="r2">r2 Mainstream Experts</row>
@@ -919,11 +853,6 @@ for rl in dem_item_labels:
 
 </block>
 
-
-<!-- ================================================================== -->
-<!-- DEM ATTITUDINAL VECTORS (page.group.4)                             -->
-<!-- Condition: TYPING_MODULE = r2 (DEM only) or r3 (Both)             -->
-<!-- ================================================================== -->
 <block label="page_group_4" cond="TYPING_MODULE.r2 or TYPING_MODULE.r3">
 
   <html label="vector_intro" where="survey" ss:questionClassNames="prism-vector-intro">
@@ -939,8 +868,8 @@ for rl in dem_item_labels:
       To what extent do you agree or disagree with the following statement?
     </title>
     <comment>
-      &ldquo;The health care system should prioritize justice and equity, ensuring
-      that marginalized communities receive fair access to quality care.&rdquo;
+      "The health care system should prioritize justice and equity, ensuring
+      that marginalized communities receive fair access to quality care."
     </comment>
     <col label="c1">Strongly disagree</col>
     <col label="c2">2</col>
@@ -962,8 +891,8 @@ for rl in dem_item_labels:
       To what extent do you agree or disagree with the following statement?
     </title>
     <comment>
-      &ldquo;Health care companies and the pharmaceutical industry generally act
-      in the best interest of patients.&rdquo;
+      "Health care companies and the pharmaceutical industry generally act
+      in the best interest of patients."
     </comment>
     <col label="c1">Strongly disagree</col>
     <col label="c2">2</col>
@@ -980,10 +909,6 @@ for rl in dem_item_labels:
 
 </block>
 
-
-<!-- ================================================================== -->
-<!-- DEM: Z-Standardization and Centroid Distance Computation           -->
-<!-- ================================================================== -->
 <text label="XDEM_RAW" where="execute,survey,report" optional="1"
       cond="TYPING_MODULE.r2 or TYPING_MODULE.r3"
       title="DEM Centroid Squared Distances">
@@ -1082,12 +1007,6 @@ XDEM_SEG_FINAL_1.val = dem_seg_labels[dem_sorted[0]]
 XDEM_SEG_FINAL_2.val = dem_seg_labels[dem_sorted[1]]
 </exec>
 
-
-<!-- ================================================================== -->
-<!-- CROSS-MODEL RESOLUTION: XSEG_ASSIGNED                             -->
-<!-- ================================================================== -->
-
-<!-- All 16 softmax probabilities in one grid -->
 <text label="XSOFTMAX_ALL" where="execute,survey,report" optional="1"
       title="All 16 Softmax Probabilities">
   <row label="r1">GOP: CEC</row>
@@ -1109,7 +1028,6 @@ XDEM_SEG_FINAL_2.val = dem_seg_labels[dem_sorted[1]]
   <col label="c1">Softmax Probability</col>
 </text>
 
-<!-- Final assigned segment (across all models) -->
 <radio label="XSEG_ASSIGNED" optional="1" where="execute,survey,report"
        title="Final PRISM Segment Assignment">
   <row label="r1">Consumer Empowerment Champions (CEC)</row>
@@ -1133,7 +1051,6 @@ XDEM_SEG_FINAL_2.val = dem_seg_labels[dem_sorted[1]]
 <float label="XSOFTMAX_TOP" where="execute,survey,report" optional="1"
        title="Highest Softmax Probability (winning segment)" size="10"/>
 
-<!-- Confidence metrics -->
 <float label="XCENTROID_DIST1" where="execute,survey,report" optional="1"
        title="Minimum Centroid Distance (squared)" size="10"/>
 <float label="XCENTROID_DIST2" where="execute,survey,report" optional="1"
@@ -1217,7 +1134,6 @@ else:
     XBCS.val = 'r3'   # Low confidence
 </exec>
 
-<!-- Store segment name as text for display -->
 <text label="XSEG_NAME" where="execute,survey,report" optional="1"
       title="Assigned Segment Full Name" size="50">
   <row label="r1">Name</row>
@@ -1237,10 +1153,6 @@ XSEG_NAME.r1 = {'c1': SEGMENT_NAMES.get(seg_num, 'Unknown')}
 XSEG_ABBREV.r1 = {'c1': SEGMENT_ABBREVS.get(seg_num, '??')}
 </exec>
 
-
-<!-- ================================================================== -->
-<!-- SEGMENT REVEAL (standalone mode only)                              -->
-<!-- ================================================================== -->
 <block label="segment_reveal" cond="standalone_mode == 1">
 
   <html label="segment_reveal_page" where="survey" ss:questionClassNames="prism-reveal">
