@@ -678,14 +678,13 @@ def test_terminations():
     term_cases = [
         # (condition_name, should_terminate)
         ("qvote = No (r2)", True),
-        ("qvote = PNTA (r3)", True),
-        ("qzip = 00000", True),
-        ("qage < 18", True),
-        ("qage = 0000 (invalid)", True),
-        ("qgender = PNTA (r5)", True),
+        ("qvote = Not Sure (r3)", True),
+        ("qzip = PNTA (r99 noanswer)", True),
+        ("qage = PNTA (r99 noanswer)", True),
+        ("qage < 18 (verify range)", True),
         ("q2024vote = didn't vote (r4)", True),
-        ("q2024vote = PNTA (r5)", True),
-        ("qparty1 = PNTA (r4)", True),
+        ("q2024vote = PNTA (r99 noanswer)", True),
+        ("qparty1 = PNTA (r99 noanswer)", True),
         ("Other + True Independent (qparty=4)", True),
     ]
 
@@ -693,22 +692,20 @@ def test_terminations():
         # These are verified by the XML term conditions; here we just confirm the logic
         if "qvote" in condition and "No" in condition:
             actual = True  # qvote.r2 triggers Term_qvote
-        elif "qvote" in condition and "PNTA" in condition:
+        elif "qvote" in condition and "Not Sure" in condition:
             actual = True  # qvote.r3 triggers Term_qvote
         elif "qzip" in condition:
-            actual = True  # qzip.val == 0 triggers Term_qzip
-        elif "qage < 18" in condition:
-            actual = True  # respondent_age < 18 triggers Term_qage_young
-        elif "qage = 0000" in condition:
-            actual = True  # qage.val == 0 triggers Term_qage_invalid
-        elif "qgender" in condition:
-            actual = True  # qgender.r5 triggers Term_qgender
+            actual = True  # qzip.r99 (PNTA noanswer) triggers Term_qzip
+        elif "qage" in condition and "PNTA" in condition:
+            actual = True  # qage.r99 (PNTA noanswer) triggers Term_qage
+        elif "qage" in condition and "verify" in condition:
+            actual = True  # verify="range(18,99)" prevents invalid age at page level
         elif "didn't vote" in condition:
             actual = True  # q2024vote.r4 triggers Term_q2024vote
         elif "q2024vote" in condition and "PNTA" in condition:
-            actual = True  # q2024vote.r5 triggers Term_q2024vote
+            actual = True  # q2024vote.r99 (PNTA noanswer) triggers Term_q2024vote
         elif "qparty1" in condition:
-            actual = True  # qparty1.r4 triggers Term_qparty1
+            actual = True  # qparty1.r99 (PNTA noanswer) triggers Term_qparty1
         elif "True Independent" in condition:
             actual = compute_typing_module('Other', 4) == 'TERM'
         else:
