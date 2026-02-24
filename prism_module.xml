@@ -272,8 +272,7 @@ DEM_DESIGN = setupMaxDiffFile("DemDesign.dat")
 
 <radio label="qparty2" atleast="1" cond="qparty1.r1 or qparty1.r2"
        ss:questionClassNames="prism-pill">
-  <title>Would you say you are a strong or not-so-strong <suspend/>
-    <pipe label="partyname">
+  <title>Would you say you are a strong or not-so-strong <pipe label="partyname">
       <case label="c1" cond="qparty1.r1">Republican</case>
       <case label="c2" cond="qparty1.r2">Democrat</case>
     </pipe>?</title>
