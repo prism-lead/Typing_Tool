@@ -1,0 +1,772 @@
+<!-- ================================================================== -->
+<!-- PRISM Survey Engine — Deliverable 3: Custom CSS/JS Styles          -->
+<!-- Decipher Style XML for PRISM module                                -->
+<!-- All styles scoped to .prism-* classes to avoid host survey conflicts -->
+<!-- ================================================================== -->
+<style name="prism_styles" label="PRISM Survey Engine Styles">
+
+<css>
+<![CDATA[
+/* ================================================================== */
+/* PRISM Design System — CSS                                          */
+/* ================================================================== */
+
+/* ---- Font Imports ---- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:wght@400;600;700&display=swap');
+
+/* ---- Design Tokens ---- */
+:root {
+  --prism-font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --prism-font-display: 'Fraunces', Georgia, serif;
+  --prism-bg: #F5F2ED;
+  --prism-cta: #6B7F4E;
+  --prism-cta-hover: #5A6B42;
+  --prism-cta-active: #4E5D39;
+  --prism-text-primary: #1B2A4A;
+  --prism-text-secondary: #4A5568;
+  --prism-divider: #E2E8F0;
+  --prism-error: #C53030;
+  --prism-white: #FFFFFF;
+  --prism-card-radius: 12px;
+  --prism-pill-radius: 30px;
+  --prism-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --prism-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --prism-transition: all 0.2s ease;
+}
+
+/* ---- Base Layout ---- */
+.prism-survey-container,
+.survey-body {
+  background-color: var(--prism-bg) !important;
+  font-family: var(--prism-font-body) !important;
+  color: var(--prism-text-primary) !important;
+}
+
+.prism-page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+/* ---- Typography ---- */
+.prism-title,
+.question-title {
+  font-family: var(--prism-font-display) !important;
+  font-weight: 600;
+  font-size: 22px;
+  line-height: 1.3;
+  color: var(--prism-text-primary);
+  margin-bottom: 8px;
+}
+
+.prism-subtitle,
+.question-comment {
+  font-family: var(--prism-font-body) !important;
+  font-size: 14px;
+  color: var(--prism-text-secondary);
+  margin-bottom: 16px;
+}
+
+/* ---- Error States ---- */
+.prism-error-msg,
+.error {
+  color: var(--prism-error) !important;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+
+/* ================================================================== */
+/* Pattern 1: atmtable.6 round — Full-width rounded buttons           */
+/* Used by: qvote, qgender, qparty1, qparty3                         */
+/* ================================================================== */
+.prism-radio-round .option,
+.atmtable6-round .clickableCell {
+  display: block;
+  width: 100%;
+  padding: 14px 20px;
+  margin-bottom: 8px;
+  background: var(--prism-white);
+  border: 2px solid var(--prism-divider);
+  border-radius: var(--prism-card-radius);
+  cursor: pointer;
+  font-family: var(--prism-font-body);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--prism-text-primary);
+  text-align: left;
+  transition: var(--prism-transition);
+  box-sizing: border-box;
+}
+
+.prism-radio-round .option:hover,
+.atmtable6-round .clickableCell:hover {
+  border-color: var(--prism-cta);
+  background: rgba(107, 127, 78, 0.05);
+}
+
+.prism-radio-round .option.selected,
+.prism-radio-round .option:active,
+.atmtable6-round .clickableCell.selected,
+.atmtable6-round .clickableCell[class*="sel"] {
+  border-color: var(--prism-cta);
+  background: var(--prism-cta);
+  color: var(--prism-white);
+}
+
+/* Hide default radio inputs inside styled buttons */
+.prism-radio-round input[type="radio"],
+.atmtable6-round input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+
+/* ================================================================== */
+/* Pattern 2: atmtable.6 pill — Pill-shaped buttons                   */
+/* Used by: qparty2                                                   */
+/* ================================================================== */
+.prism-radio-pill .option,
+.atmtable6-pill .clickableCell {
+  display: inline-block;
+  padding: 12px 28px;
+  margin: 4px 8px 4px 0;
+  background: var(--prism-white);
+  border: 2px solid var(--prism-divider);
+  border-radius: var(--prism-pill-radius);
+  cursor: pointer;
+  font-family: var(--prism-font-body);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--prism-text-primary);
+  transition: var(--prism-transition);
+}
+
+.prism-radio-pill .option:hover,
+.atmtable6-pill .clickableCell:hover {
+  border-color: var(--prism-cta);
+  background: rgba(107, 127, 78, 0.05);
+}
+
+.prism-radio-pill .option.selected,
+.atmtable6-pill .clickableCell.selected,
+.atmtable6-pill .clickableCell[class*="sel"] {
+  border-color: var(--prism-cta);
+  background: var(--prism-cta);
+  color: var(--prism-white);
+}
+
+.prism-radio-pill input[type="radio"],
+.atmtable6-pill input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+
+/* ================================================================== */
+/* Pattern 3: atmtable.6 with images — Buttons with candidate images  */
+/* Used by: q2024vote, qparty1, qparty3                              */
+/* ================================================================== */
+.prism-radio-image .option,
+.atmtable6-image .clickableCell {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 12px 20px;
+  margin-bottom: 8px;
+  background: var(--prism-white);
+  border: 2px solid var(--prism-divider);
+  border-radius: var(--prism-card-radius);
+  cursor: pointer;
+  font-family: var(--prism-font-body);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--prism-text-primary);
+  transition: var(--prism-transition);
+  box-sizing: border-box;
+}
+
+.prism-radio-image .option-icon,
+.atmtable6-image .option-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 14px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.prism-radio-image .option:hover,
+.atmtable6-image .clickableCell:hover {
+  border-color: var(--prism-cta);
+  background: rgba(107, 127, 78, 0.05);
+}
+
+.prism-radio-image .option.selected,
+.atmtable6-image .clickableCell.selected,
+.atmtable6-image .clickableCell[class*="sel"] {
+  border-color: var(--prism-cta);
+  background: var(--prism-cta);
+  color: var(--prism-white);
+}
+
+
+/* ================================================================== */
+/* Pattern 4: atmtable.6 with dividers — Row dividers between groups  */
+/* Used by: q2024vote                                                 */
+/* ================================================================== */
+.prism-radio-divider .option-group-divider,
+.atmtable6-divider .divider-row {
+  border-top: 1px solid var(--prism-divider);
+  margin: 12px 0;
+  padding: 0;
+}
+
+
+/* ================================================================== */
+/* Pattern 5: Digit box — Individual input boxes per digit            */
+/* Used by: qzip (5 boxes), qage (4 boxes)                           */
+/* ================================================================== */
+.prism-digit-box-container {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-start;
+  margin-top: 12px;
+}
+
+.prism-digit-box,
+.digit-box input[type="text"],
+.digit-box input[type="number"] {
+  width: 52px;
+  height: 60px;
+  border: 2px solid var(--prism-divider);
+  border-radius: var(--prism-card-radius);
+  text-align: center;
+  font-family: var(--prism-font-body);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--prism-text-primary);
+  background: var(--prism-white);
+  transition: var(--prism-transition);
+  -moz-appearance: textfield;
+}
+
+.prism-digit-box:focus,
+.digit-box input:focus {
+  outline: none;
+  border-color: var(--prism-cta);
+  box-shadow: 0 0 0 3px rgba(107, 127, 78, 0.15);
+}
+
+/* Remove spinner for number inputs */
+.prism-digit-box::-webkit-outer-spin-button,
+.prism-digit-box::-webkit-inner-spin-button,
+.digit-box input::-webkit-outer-spin-button,
+.digit-box input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+
+/* ================================================================== */
+/* Pattern 6: MaxDiff grid — MOST/LEAST two-column layout             */
+/* Used by: DEM and GOP MaxDiff tasks                                 */
+/* ================================================================== */
+.prism-maxdiff-grid,
+.maxdiff6-grid {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 16px 0;
+}
+
+/* Header bar */
+.prism-maxdiff-grid thead th,
+.maxdiff6-grid thead th {
+  background: var(--prism-text-primary);
+  color: var(--prism-white);
+  font-family: var(--prism-font-body);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 12px 16px;
+  text-align: center;
+}
+
+.prism-maxdiff-grid thead th:first-child,
+.maxdiff6-grid thead th:first-child {
+  border-radius: var(--prism-card-radius) 0 0 0;
+}
+
+.prism-maxdiff-grid thead th:last-child,
+.maxdiff6-grid thead th:last-child {
+  border-radius: 0 var(--prism-card-radius) 0 0;
+}
+
+/* Item cells */
+.prism-maxdiff-grid td,
+.maxdiff6-grid td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--prism-divider);
+  font-family: var(--prism-font-body);
+  font-size: 15px;
+  color: var(--prism-text-primary);
+  vertical-align: middle;
+}
+
+.prism-maxdiff-grid td.item-text,
+.maxdiff6-grid td.row-text {
+  text-align: left;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+/* Radio cells (MOST/LEAST columns) */
+.prism-maxdiff-grid td.radio-cell,
+.maxdiff6-grid td.col-cell {
+  text-align: center;
+  width: 80px;
+}
+
+.prism-maxdiff-grid td.radio-cell input[type="radio"],
+.maxdiff6-grid td.col-cell input[type="radio"] {
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+  accent-color: var(--prism-cta);
+}
+
+/* Alternate row background */
+.prism-maxdiff-grid tbody tr:nth-child(even),
+.maxdiff6-grid tbody tr:nth-child(even) {
+  background: rgba(245, 242, 237, 0.5);
+}
+
+/* Hover state */
+.prism-maxdiff-grid tbody tr:hover,
+.maxdiff6-grid tbody tr:hover {
+  background: rgba(107, 127, 78, 0.05);
+}
+
+/* Last row no border */
+.prism-maxdiff-grid tbody tr:last-child td,
+.maxdiff6-grid tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Container card */
+.prism-maxdiff-container,
+.maxdiff6-container {
+  background: var(--prism-white);
+  border-radius: var(--prism-card-radius);
+  box-shadow: var(--prism-shadow-sm);
+  overflow: hidden;
+  margin: 16px 0;
+}
+
+/* Task counter */
+.prism-maxdiff-task-counter {
+  font-family: var(--prism-font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--prism-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+
+/* ================================================================== */
+/* Pattern 7: 7-pt semantic differential with color gradient          */
+/* Used by: vector_justice, vector_industry                           */
+/* ================================================================== */
+.prism-semantic-scale {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0;
+  margin: 24px 0;
+  padding: 0 8px;
+}
+
+.prism-semantic-scale .scale-point,
+.semantic7-scale .clickableCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid var(--prism-divider);
+  background: var(--prism-white);
+  cursor: pointer;
+  font-family: var(--prism-font-body);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--prism-text-secondary);
+  transition: var(--prism-transition);
+  position: relative;
+}
+
+/* Color gradient from left (disagree, warm) to right (agree, cool) */
+.prism-semantic-scale .scale-point:nth-child(1):hover,
+.semantic7-scale .clickableCell:nth-child(1):hover { background: #E8D5D5; border-color: #C53030; }
+.prism-semantic-scale .scale-point:nth-child(2):hover,
+.semantic7-scale .clickableCell:nth-child(2):hover { background: #EAD9CF; border-color: #C57830; }
+.prism-semantic-scale .scale-point:nth-child(3):hover,
+.semantic7-scale .clickableCell:nth-child(3):hover { background: #EADECF; border-color: #C5A630; }
+.prism-semantic-scale .scale-point:nth-child(4):hover,
+.semantic7-scale .clickableCell:nth-child(4):hover { background: #E2E2D5; border-color: #8B8B6B; }
+.prism-semantic-scale .scale-point:nth-child(5):hover,
+.semantic7-scale .clickableCell:nth-child(5):hover { background: #D5E0D5; border-color: #5A8B5A; }
+.prism-semantic-scale .scale-point:nth-child(6):hover,
+.semantic7-scale .clickableCell:nth-child(6):hover { background: #D0DDD8; border-color: #4A7B6E; }
+.prism-semantic-scale .scale-point:nth-child(7):hover,
+.semantic7-scale .clickableCell:nth-child(7):hover { background: #CFD9E0; border-color: #3D6B8B; }
+
+/* Selected states with gradient */
+.prism-semantic-scale .scale-point:nth-child(1).selected,
+.semantic7-scale .clickableCell:nth-child(1).selected,
+.semantic7-scale .clickableCell:nth-child(1)[class*="sel"] { background: #C53030; border-color: #C53030; color: #FFF; }
+.prism-semantic-scale .scale-point:nth-child(2).selected,
+.semantic7-scale .clickableCell:nth-child(2).selected,
+.semantic7-scale .clickableCell:nth-child(2)[class*="sel"] { background: #C57830; border-color: #C57830; color: #FFF; }
+.prism-semantic-scale .scale-point:nth-child(3).selected,
+.semantic7-scale .clickableCell:nth-child(3).selected,
+.semantic7-scale .clickableCell:nth-child(3)[class*="sel"] { background: #B5A030; border-color: #B5A030; color: #FFF; }
+.prism-semantic-scale .scale-point:nth-child(4).selected,
+.semantic7-scale .clickableCell:nth-child(4).selected,
+.semantic7-scale .clickableCell:nth-child(4)[class*="sel"] { background: #8B8B6B; border-color: #8B8B6B; color: #FFF; }
+.prism-semantic-scale .scale-point:nth-child(5).selected,
+.semantic7-scale .clickableCell:nth-child(5).selected,
+.semantic7-scale .clickableCell:nth-child(5)[class*="sel"] { background: #5A8B5A; border-color: #5A8B5A; color: #FFF; }
+.prism-semantic-scale .scale-point:nth-child(6).selected,
+.semantic7-scale .clickableCell:nth-child(6).selected,
+.semantic7-scale .clickableCell:nth-child(6)[class*="sel"] { background: #4A7B6E; border-color: #4A7B6E; color: #FFF; }
+.prism-semantic-scale .scale-point:nth-child(7).selected,
+.semantic7-scale .clickableCell:nth-child(7).selected,
+.semantic7-scale .clickableCell:nth-child(7)[class*="sel"] { background: #3D6B8B; border-color: #3D6B8B; color: #FFF; }
+
+/* Anchor labels */
+.prism-semantic-anchors {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding: 0 4px;
+}
+
+.prism-semantic-anchor {
+  font-family: var(--prism-font-body);
+  font-size: 12px;
+  color: var(--prism-text-secondary);
+  font-weight: 500;
+}
+
+/* Hide default radio inputs in semantic scale */
+.prism-semantic-scale input[type="radio"],
+.semantic7-scale input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* Connecting line between scale points */
+.prism-semantic-scale-track {
+  position: relative;
+}
+
+.prism-semantic-scale-track::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 22px;
+  right: 22px;
+  height: 2px;
+  background: var(--prism-divider);
+  z-index: 0;
+  transform: translateY(-50%);
+}
+
+
+/* ================================================================== */
+/* Pattern 8: Segment reveal card                                     */
+/* Used by: segment reveal page (standalone mode)                     */
+/* ================================================================== */
+.prism-segment-reveal {
+  display: flex;
+  justify-content: center;
+  padding: 32px 0;
+}
+
+.prism-segment-card {
+  background: var(--prism-white);
+  border-radius: 16px;
+  box-shadow: var(--prism-shadow-md);
+  padding: 40px 48px;
+  text-align: center;
+  max-width: 480px;
+  width: 100%;
+}
+
+.prism-segment-label {
+  font-family: var(--prism-font-body);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--prism-text-secondary);
+  margin-bottom: 12px;
+}
+
+.prism-segment-name {
+  font-family: var(--prism-font-display);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--prism-text-primary);
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+
+.prism-segment-abbrev {
+  font-family: var(--prism-font-body);
+  font-size: 16px;
+  color: var(--prism-text-secondary);
+  margin-bottom: 20px;
+}
+
+.prism-segment-confidence {
+  font-family: var(--prism-font-body);
+  font-size: 14px;
+  color: var(--prism-text-secondary);
+  padding-top: 16px;
+  border-top: 1px solid var(--prism-divider);
+}
+
+/* Model-specific accent colors for segment cards */
+.prism-segment-card.gop-model {
+  border-top: 4px solid #C53030;
+}
+
+.prism-segment-card.dem-model {
+  border-top: 4px solid #3D6B8B;
+}
+
+
+/* ================================================================== */
+/* Navigation / CTA Button                                            */
+/* ================================================================== */
+.prism-btn-next,
+.survey-buttons .btn-next,
+.survey-buttons input[type="submit"] {
+  display: inline-block;
+  padding: 14px 40px;
+  background: var(--prism-cta) !important;
+  color: var(--prism-white) !important;
+  border: none !important;
+  border-radius: var(--prism-card-radius);
+  font-family: var(--prism-font-body);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--prism-transition);
+  text-transform: none;
+}
+
+.prism-btn-next:hover,
+.survey-buttons .btn-next:hover,
+.survey-buttons input[type="submit"]:hover {
+  background: var(--prism-cta-hover) !important;
+  box-shadow: var(--prism-shadow-sm);
+}
+
+.prism-btn-next:active,
+.survey-buttons .btn-next:active,
+.survey-buttons input[type="submit"]:active {
+  background: var(--prism-cta-active) !important;
+}
+
+
+/* ================================================================== */
+/* Progress Bar                                                       */
+/* ================================================================== */
+.prism-progress-bar,
+.survey-progress {
+  height: 4px;
+  background: var(--prism-divider);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.prism-progress-fill,
+.survey-progress .progress-fill {
+  height: 100%;
+  background: var(--prism-cta);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+
+/* ================================================================== */
+/* Responsive Design                                                  */
+/* ================================================================== */
+@media (max-width: 640px) {
+  .prism-page {
+    padding: 16px 12px;
+  }
+
+  .prism-title,
+  .question-title {
+    font-size: 20px !important;
+  }
+
+  .prism-maxdiff-grid td,
+  .maxdiff6-grid td {
+    padding: 10px 8px;
+    font-size: 14px;
+  }
+
+  .prism-maxdiff-grid td.radio-cell,
+  .maxdiff6-grid td.col-cell {
+    width: 60px;
+  }
+
+  .prism-semantic-scale .scale-point,
+  .semantic7-scale .clickableCell {
+    width: 38px;
+    height: 38px;
+    font-size: 12px;
+  }
+
+  .prism-segment-card {
+    padding: 28px 24px;
+  }
+
+  .prism-segment-name {
+    font-size: 24px;
+  }
+
+  .prism-digit-box,
+  .digit-box input {
+    width: 44px;
+    height: 52px;
+    font-size: 20px;
+  }
+}
+]]>
+</css>
+
+<js>
+<![CDATA[
+/* ================================================================== */
+/* PRISM Survey Engine — JavaScript                                   */
+/* ================================================================== */
+(function() {
+  'use strict';
+
+  /* ---- Digit Box Enhancement ---- */
+  /* Auto-advance to next digit box on input for ZIP and age fields */
+  function initDigitBoxes() {
+    var containers = document.querySelectorAll('.prism-digit-box-container, .digit-box');
+    containers.forEach(function(container) {
+      var inputs = container.querySelectorAll('input');
+      inputs.forEach(function(input, idx) {
+        // Limit to single character
+        input.setAttribute('maxlength', '1');
+        input.setAttribute('inputmode', 'numeric');
+        input.setAttribute('pattern', '[0-9]');
+
+        input.addEventListener('input', function(e) {
+          var val = this.value;
+          // Keep only digits
+          this.value = val.replace(/[^0-9]/g, '');
+          // Auto-advance on valid input
+          if (this.value.length === 1 && idx < inputs.length - 1) {
+            inputs[idx + 1].focus();
+          }
+        });
+
+        input.addEventListener('keydown', function(e) {
+          // Backspace: clear and move to previous
+          if (e.key === 'Backspace' && this.value === '' && idx > 0) {
+            inputs[idx - 1].focus();
+            inputs[idx - 1].value = '';
+            e.preventDefault();
+          }
+          // Arrow left
+          if (e.key === 'ArrowLeft' && idx > 0) {
+            inputs[idx - 1].focus();
+            e.preventDefault();
+          }
+          // Arrow right
+          if (e.key === 'ArrowRight' && idx < inputs.length - 1) {
+            inputs[idx + 1].focus();
+            e.preventDefault();
+          }
+        });
+
+        // Select all on focus
+        input.addEventListener('focus', function() {
+          this.select();
+        });
+      });
+    });
+  }
+
+  /* ---- Semantic Scale Enhancement ---- */
+  /* Add visual feedback for semantic differential scales */
+  function initSemanticScales() {
+    var scales = document.querySelectorAll('.prism-semantic-scale, .semantic7-scale');
+    scales.forEach(function(scale) {
+      var points = scale.querySelectorAll('.scale-point, .clickableCell');
+      points.forEach(function(point) {
+        point.addEventListener('click', function() {
+          // Remove selected from all siblings
+          points.forEach(function(p) { p.classList.remove('selected'); });
+          // Add selected to clicked
+          this.classList.add('selected');
+        });
+      });
+    });
+  }
+
+  /* ---- MaxDiff Task Counter ---- */
+  /* Display "Task X of Y" above each MaxDiff page */
+  function initMaxDiffCounters() {
+    var counters = document.querySelectorAll('.prism-maxdiff-task-counter');
+    counters.forEach(function(counter) {
+      var current = counter.getAttribute('data-current') || '1';
+      var total = counter.getAttribute('data-total') || '?';
+      counter.textContent = 'TASK ' + current + ' OF ' + total;
+    });
+  }
+
+  /* ---- Initialize on DOM ready ---- */
+  function init() {
+    initDigitBoxes();
+    initSemanticScales();
+    initMaxDiffCounters();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  /* Re-initialize on Decipher page transitions (AJAX navigation) */
+  if (typeof SST !== 'undefined' && SST.on) {
+    SST.on('pageRendered', init);
+  }
+
+})();
+]]>
+</js>
+
+</style>

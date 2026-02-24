@@ -1,0 +1,1052 @@
+<survey
+  alt=""
+  autosave="0"
+  builderCompatible="1"
+  compat="153"
+  displayOnError="all"
+  extraVariables="source,list,camp,lang"
+  fir="on"
+  mobile="compat"
+  mession="0"
+  name="PRISM Survey Engine v1.0"
+  setup="time,term"
+  ss:disablealiasing="1"
+  state="testing">
+
+<!-- ================================================================== -->
+<!-- PRISM SURVEY ENGINE — Phase 1 Module                               -->
+<!-- Standalone Decipher XML module for PRISM segment assignment         -->
+<!-- ================================================================== -->
+
+<!-- Configuration flag: set to 1 for standalone survey with segment reveal -->
+<exec when="init">
+standalone_mode = 0
+</exec>
+
+<!-- ================================================================== -->
+<!-- INITIALIZATION: Load MaxDiff designs and define helper functions    -->
+<!-- ================================================================== -->
+<exec when="init">
+import math
+
+# MaxDiff design file loaders
+def setupMaxDiffFile(filename):
+    """Load a MaxDiff design file and return dict keyed by (version, task)."""
+    designs = {}
+    fpath = getFilePath(filename)
+    with open(fpath, 'r') as f:
+        header = f.readline()  # skip header
+        for line in f:
+            parts = line.strip().split('\t')
+            if len(parts) >= 3:
+                ver = int(parts[0])
+                task = int(parts[1])
+                items = [int(x) for x in parts[2:]]
+                designs[(ver, task)] = items
+    return designs
+
+def setupMaxDiffItemsI(designs, version, task, question):
+    """Set up MaxDiff items for a given version/task by showing only the items in the design."""
+    items = designs.get((version, task), [])
+    for row in question.rows:
+        if int(row.label.replace('r', '')) in items:
+            row.show()
+        else:
+            row.hide()
+
+# Centroid distance computation
+def algorithmCalculation(z_scores, centroids, n_dims):
+    """Compute squared Euclidean distances from z_scores to each centroid."""
+    distances = []
+    for centroid in centroids:
+        dist_sq = 0.0
+        for d in range(n_dims):
+            diff = z_scores[d] - centroid[d]
+            dist_sq += diff * diff
+        distances.append(dist_sq)
+    return distances
+
+# Softmax on negative squared distances
+def softmaxFromDistances(distances):
+    """Compute softmax probabilities from squared distances: P(k) = exp(-D^2_k) / sum(exp(-D^2_j))."""
+    neg_dists = [-d for d in distances]
+    max_neg = max(neg_dists)
+    exp_vals = [math.exp(d - max_neg) for d in neg_dists]
+    total = sum(exp_vals)
+    return [e / total for e in exp_vals]
+
+# ---- GOP Centroids (11 dimensions x 10 segments) ----
+# Dimensions: ZBW_1..ZBW_5, ZBW_7..ZBW_12 (note: no ZBW_6)
+# Segments: CEC, HHN, TC, PFF, PP, WE, HF, VS, MFL, TSP
+GOP_CENTROIDS = [
+    # CEC (r1): Consumer Empowerment Champions
+    [0.3410, -0.4671, 0.6098, 0.1143, -0.7036, 0.0505, 0.8019, -0.5684, 0.8682, -0.3154, 0.7963],
+    # HHN (r2): Holistic Health Naturalists
+    [-0.3090, 0.5871, -0.0539, 0.1830, -0.0040, 0.8530, 0.7584, -0.0316, -0.3505, -0.5236, -0.3093],
+    # TC (r3): Traditional Conservatives
+    [0.6866, -0.5003, 0.2115, -0.2006, -0.5797, -0.4700, -0.5119, -0.5437, 0.5125, 0.0105, 0.6587],
+    # PFF (r4): Paleo Freedom Fighters
+    [-0.6261, -0.1478, -0.5363, 0.0055, 0.4093, -0.0101, -0.1027, 0.7050, -0.6975, -0.2118, -0.5082],
+    # PP (r5): Price Populists
+    [0.2206, 0.0488, 0.5652, 0.6269, -0.2285, -0.2279, -0.4233, -0.3488, 0.3140, 0.4543, 0.3127],
+    # WE (r6): Wellness Evangelists
+    [-0.5308, 0.6547, -0.3506, -0.0587, 0.4993, 0.6519, 0.4096, 0.6133, -0.7165, -0.0780, -0.6397],
+    # HF (r7): Health Futurists
+    [0.0282, 0.5016, 0.1783, 0.2614, -0.0101, -0.0474, 0.0979, -0.3651, 0.1753, 0.4854, 0.0260],
+    # VS (r8): Vaccine Skeptics
+    [-0.5524, -0.3927, -0.3831, -0.6277, 1.2723, 0.1022, -0.2085, 0.8724, -0.5126, 0.0488, -0.5440],
+    # MFL (r9): Medical Freedom Libertarians
+    [-0.0036, -0.4534, -0.6148, -0.3893, 0.6905, -0.4456, -0.5912, 0.4474, -0.3783, -0.2979, -0.4736],
+    # TSP (r10): Trust The Science Pragmatists
+    [0.5456, 0.2060, 0.3506, 0.0792, -0.7413, -0.4221, -0.1846, -0.6942, 0.6610, 0.3723, 0.6245],
+]
+
+# GOP Z-standardization norms (mu, sigma) for 11 items
+# Order: r1(marriage/family), r2(pharma distrust), r3(drug prices), r4(rural hospitals),
+#   r5(vaccine skepticism), r7(holistic), r8(whole-food), r9(carnivore), r10(US supply chain),
+#   r11(free market), r12(competition)
+GOP_NORMS = [
+    (0.38509, 1.43382),   # ZBW_1  r1
+    (-0.17378, 1.33589),  # ZBW_2  r2
+    (0.24627, 1.27153),   # ZBW_3  r3
+    (-0.04010, 0.99507),  # ZBW_4  r4
+    (-0.59229, 1.43007),  # ZBW_5  r5
+    (-0.02108, 1.03988),  # ZBW_7  r7
+    (0.47455, 1.17742),   # ZBW_8  r8
+    (-0.37738, 1.06212),  # ZBW_9  r9
+    (0.74447, 1.19670),   # ZBW_10 r10
+    (-0.40308, 1.23144),  # ZBW_11 r11
+    (0.53265, 1.19631),   # ZBW_12 r12
+]
+
+# ---- DEM Centroids (10 dimensions x 6 segments) ----
+# Dimensions: ZBW_1..ZBW_7, ZBW_9, ZFACTOR_JUSTICE, ZFACTOR_INDUSTRY
+# Segments: UCP, FJP, HCP, HAD, HCI, GHI
+DEM_CENTROIDS = [
+    # UCP (r11): Universal Care Progressives
+    [0.1834, 0.1043, -0.3253, 0.5140, 0.7900, 0.2740, 0.3654, -0.5267, 0.2823, -0.1823],
+    # FJP (r12): Faith and Justice Progressives
+    [-0.3254, -0.6817, 0.6244, -0.0737, -0.0474, -0.2127, 0.2581, 0.8823, 0.3155, -0.0456],
+    # HCP (r13): Health Care Protectionists
+    [-0.0193, 0.4371, -0.2104, 0.2879, 0.3230, 0.0620, -0.5459, -0.4163, -0.5613, 0.6723],
+    # HAD (r14): Health Abundance Democrats
+    [0.3698, 0.1785, -0.3773, -0.5267, -0.3804, -0.2395, 0.1668, -0.3067, 0.4538, -0.2467],
+    # HCI (r15): Health Care Incrementalists
+    [0.0135, 0.1537, 0.2640, -0.4459, -0.6988, 0.1498, -0.0685, 0.0175, -0.4050, -0.0802],
+    # GHI (r16): Global Health Institutionalists
+    [-0.3289, 0.0543, 0.3427, 0.3437, -0.1124, -0.0424, -0.0447, 0.2780, -0.0179, -0.2150],
+]
+
+# DEM Z-standardization norms (mu, sigma) for 8 BW items + 2 vectors
+DEM_NORMS = [
+    (-0.4545, 1.01042),   # ZBW_1  r1 tech/data equity
+    (-0.2546, 1.19910),   # ZBW_2  r2 mainstream experts
+    (-0.9328, 1.22412),   # ZBW_3  r3 digital disruption
+    (0.0386, 1.13192),    # ZBW_4  r4 corporate greed
+    (0.9975, 1.32821),    # ZBW_5  r5 Medicare for All
+    (-0.1851, 1.00078),   # ZBW_6  r6 union protection
+    (0.1674, 1.09544),    # ZBW_7  r7 racial equity
+    (-0.6671, 1.51346),   # ZBW_9  r9 faith-based access
+    (5.009, 1.28372),     # ZFACTOR_JUSTICE (vector_justice)
+    (5.631, 1.02132),     # ZFACTOR_INDUSTRY (vector_industry, reversed)
+]
+
+# Segment name lookup
+SEGMENT_NAMES = {
+    1: "Consumer Empowerment Champions",
+    2: "Holistic Health Naturalists",
+    3: "Traditional Conservatives",
+    4: "Paleo Freedom Fighters",
+    5: "Price Populists",
+    6: "Wellness Evangelists",
+    7: "Health Futurists",
+    8: "Vaccine Skeptics",
+    9: "Medical Freedom Libertarians",
+    10: "Trust The Science Pragmatists",
+    11: "Universal Care Progressives",
+    12: "Faith and Justice Progressives",
+    13: "Health Care Protectionists",
+    14: "Health Abundance Democrats",
+    15: "Health Care Incrementalists",
+    16: "Global Health Institutionalists",
+}
+
+SEGMENT_ABBREVS = {
+    1: "CEC", 2: "HHN", 3: "TC", 4: "PFF", 5: "PP",
+    6: "WE", 7: "HF", 8: "VS", 9: "MFL", 10: "TSP",
+    11: "UCP", 12: "FJP", 13: "HCP", 14: "HAD", 15: "HCI", 16: "GHI",
+}
+</exec>
+
+<!-- Load MaxDiff design files -->
+<exec when="init">
+GOP_DESIGN = setupMaxDiffFile("GOPDesign.dat")
+DEM_DESIGN = setupMaxDiffFile("DemDesign.dat")
+</exec>
+
+
+<!-- ================================================================== -->
+<!-- SCREENER: page.group.1                                             -->
+<!-- ================================================================== -->
+<block label="page_group_1" randomizeChildren="0">
+
+  <!-- Q: Voter Registration -->
+  <radio label="qvote" atleast="1" style="atmtable.6">
+    <title>Are you currently registered to vote in the United States?</title>
+    <comment>Select one</comment>
+    <row label="r1">Yes</row>
+    <row label="r2">No</row>
+    <row label="r3">Prefer not to answer</row>
+  </radio>
+  <term label="Term_qvote" cond="qvote.r2 or qvote.r3">Thank you for your interest, but this survey is for registered U.S. voters only.</term>
+
+  <!-- Q: ZIP Code -->
+  <number label="qzip" size="5" atleast="1" optional="0" verify="range(1,99999)">
+    <title>What is your 5-digit ZIP code?</title>
+    <comment>Enter your ZIP code</comment>
+  </number>
+  <exec>
+if int(str(qzip.val).strip() if qzip.val else '0') == 0:
+    qzip.val = 0
+</exec>
+  <term label="Term_qzip" cond="qzip.val == 0">Thank you, but we need a valid ZIP code to continue.</term>
+
+  <!-- Q: Age (Birth Year) -->
+  <number label="qage" size="4" atleast="1" optional="0" verify="range(1900,2010)">
+    <title>What year were you born?</title>
+    <comment>Enter your birth year (4 digits)</comment>
+  </number>
+  <exec>
+import datetime
+birth_year = int(str(qage.val).strip() if qage.val else '0')
+current_year = datetime.datetime.now().year
+respondent_age = current_year - birth_year if birth_year > 0 else 0
+</exec>
+  <term label="Term_qage_young" cond="respondent_age lt 18 and respondent_age gt 0">Thank you, but you must be at least 18 years old to participate.</term>
+  <term label="Term_qage_invalid" cond="qage.val == 0 or respondent_age == 0">Thank you, but we need a valid birth year to continue.</term>
+
+  <!-- Q: Gender -->
+  <radio label="qgender" atleast="1" style="atmtable.6">
+    <title>How do you identify?</title>
+    <comment>Select one</comment>
+    <row label="r1">Male</row>
+    <row label="r2">Female</row>
+    <row label="r3">Non-binary / Third gender</row>
+    <row label="r4">Other</row>
+    <row label="r5">Prefer not to answer</row>
+  </radio>
+  <term label="Term_qgender" cond="qgender.r5">Thank you for your interest, but we need this information to continue.</term>
+
+  <!-- Q: 2024 Vote -->
+  <radio label="q2024vote" atleast="1" style="atmtable.6">
+    <title>In the 2024 presidential election, who did you vote for?</title>
+    <comment>Select one</comment>
+    <row label="r1">Donald Trump</row>
+    <row label="r2">Kamala Harris</row>
+    <row label="r3">Another candidate</row>
+    <row label="r4">I did not vote</row>
+    <row label="r5">Prefer not to answer</row>
+  </radio>
+  <term label="Term_q2024vote" cond="q2024vote.r4 or q2024vote.r5">Thank you, but we need to know about your 2024 vote to continue.</term>
+
+  <!-- Q: Party ID (Level 1) -->
+  <radio label="qparty1" atleast="1" style="atmtable.6">
+    <title>Generally speaking, do you consider yourself a...?</title>
+    <comment>Select one</comment>
+    <row label="r1">Republican</row>
+    <row label="r2">Democrat</row>
+    <row label="r3">Independent / Other</row>
+    <row label="r4">Prefer not to answer</row>
+  </radio>
+  <term label="Term_qparty1" cond="qparty1.r4">Thank you for your interest, but we need this information to continue.</term>
+
+  <!-- Q: Party ID (Level 2 - Republican/Democrat strength) -->
+  <radio label="qparty2" atleast="1" cond="qparty1.r1 or qparty1.r2" style="atmtable.6">
+    <title>Would you consider yourself a strong or not very strong <suspend/>
+      <pipe label="partyname">
+        <case label="c1" cond="qparty1.r1">Republican</case>
+        <case label="c2" cond="qparty1.r2">Democrat</case>
+      </pipe>?</title>
+    <comment>Select one</comment>
+    <row label="r1">Strong</row>
+    <row label="r2">Not very strong</row>
+  </radio>
+
+  <!-- Q: Party ID (Level 2 - Independent lean) -->
+  <radio label="qparty3" atleast="1" cond="qparty1.r3" style="atmtable.6">
+    <title>Do you lean more toward the...?</title>
+    <comment>Select one</comment>
+    <row label="r1">Republican Party</row>
+    <row label="r2">Democratic Party</row>
+    <row label="r3">Neither / Truly independent</row>
+  </radio>
+
+</block>
+
+<!-- ================================================================== -->
+<!-- COMPUTED: 7-point party identification scale                       -->
+<!-- ================================================================== -->
+<exec>
+# Derive qparty: 7-point scale (1=Strong R ... 7=Strong D)
+# 1 = Strong Republican
+# 2 = Not very strong Republican
+# 3 = Lean Republican (Independent)
+# 4 = Pure Independent / True Independent
+# 5 = Lean Democrat (Independent)
+# 6 = Not very strong Democrat
+# 7 = Strong Democrat
+
+qparty_val = 4  # default: independent
+
+if qparty1.r1:
+    # Republican
+    if qparty2.r1:
+        qparty_val = 1  # Strong R
+    else:
+        qparty_val = 2  # Not very strong R
+elif qparty1.r2:
+    # Democrat
+    if qparty2.r1:
+        qparty_val = 7  # Strong D
+    else:
+        qparty_val = 6  # Not very strong D
+elif qparty1.r3:
+    # Independent
+    if qparty3.r1:
+        qparty_val = 3  # Lean R
+    elif qparty3.r2:
+        qparty_val = 5  # Lean D
+    else:
+        qparty_val = 4  # True independent
+
+qparty.val = qparty_val
+</exec>
+
+<number label="qparty" size="1" where="execute,survey,report" optional="1" title="Derived 7-point party ID scale">
+  <comment>1=Strong R, 2=Weak R, 3=Lean R, 4=Indep, 5=Lean D, 6=Weak D, 7=Strong D</comment>
+</number>
+
+<!-- ================================================================== -->
+<!-- COMPUTED: TYPING_MODULE assignment                                 -->
+<!-- r1=GOP only, r2=DEM only, r3=Both                                 -->
+<!-- ================================================================== -->
+<radio label="TYPING_MODULE" optional="1" where="execute,survey,report">
+  <title>Typing Module Assignment</title>
+  <row label="r1">GOP Model Only</row>
+  <row label="r2">DEM Model Only</row>
+  <row label="r3">Both Models</row>
+</radio>
+
+<exec>
+# TYPING_MODULE assignment rules based on q2024vote and qparty
+p = qparty.val
+
+if q2024vote.r1:
+    # Voted Trump
+    if p &lt; 5:
+        TYPING_MODULE.val = 'r1'   # GOP only
+    else:
+        TYPING_MODULE.val = 'r3'   # Both
+elif q2024vote.r2:
+    # Voted Harris
+    if p &lt; 4:
+        TYPING_MODULE.val = 'r3'   # Both
+    else:
+        TYPING_MODULE.val = 'r2'   # DEM only
+elif q2024vote.r3:
+    # Voted other candidate
+    if p &lt;= 2:
+        TYPING_MODULE.val = 'r1'   # GOP only (Strong R or Weak R)
+    elif p == 3:
+        TYPING_MODULE.val = 'r3'   # Both (Lean R)
+    elif p == 4:
+        TYPING_MODULE.val = 'TERM' # True independent - terminate
+    elif p &gt;= 5:
+        TYPING_MODULE.val = 'r2'   # DEM only
+</exec>
+
+<term label="Term_true_independent" cond="TYPING_MODULE.val == 'TERM'">Thank you for your interest, but this study requires respondents with a party leaning.</term>
+
+
+<!-- ================================================================== -->
+<!-- GOP MAXDIFF BLOCK                                                  -->
+<!-- Condition: TYPING_MODULE = r1 (GOP only) or r3 (Both)             -->
+<!-- 11 items x 11 tasks x 5 items/task                                -->
+<!-- ================================================================== -->
+<block label="GOPBlock" cond="TYPING_MODULE.r1 or TYPING_MODULE.r3">
+
+  <!-- Version assignment via quota -->
+  <quota label="GOP_Version_Quota" sheet="gop_version" overquota="noqual" usecond="0">
+    <title>GOP MaxDiff Version Assignment</title>
+    <row label="r1" cond="1" limit="0">Version 1</row>
+    <row label="r2" cond="1" limit="0">Version 2</row>
+    <row label="r3" cond="1" limit="0">Version 3</row>
+    <row label="r4" cond="1" limit="0">Version 4</row>
+    <row label="r5" cond="1" limit="0">Version 5</row>
+    <row label="r6" cond="1" limit="0">Version 6</row>
+    <row label="r7" cond="1" limit="0">Version 7</row>
+    <row label="r8" cond="1" limit="0">Version 8</row>
+    <row label="r9" cond="1" limit="0">Version 9</row>
+    <row label="r10" cond="1" limit="0">Version 10</row>
+    <row label="r11" cond="1" limit="0">Version 11</row>
+    <row label="r12" cond="1" limit="0">Version 12</row>
+    <row label="r13" cond="1" limit="0">Version 13</row>
+    <row label="r14" cond="1" limit="0">Version 14</row>
+    <row label="r15" cond="1" limit="0">Version 15</row>
+    <row label="r16" cond="1" limit="0">Version 16</row>
+    <row label="r17" cond="1" limit="0">Version 17</row>
+    <row label="r18" cond="1" limit="0">Version 18</row>
+    <row label="r19" cond="1" limit="0">Version 19</row>
+    <row label="r20" cond="1" limit="0">Version 20</row>
+    <row label="r21" cond="1" limit="0">Version 21</row>
+    <row label="r22" cond="1" limit="0">Version 22</row>
+    <row label="r23" cond="1" limit="0">Version 23</row>
+    <row label="r24" cond="1" limit="0">Version 24</row>
+    <row label="r25" cond="1" limit="0">Version 25</row>
+  </quota>
+
+  <exec>
+import random as _gop_rng
+gop_version = _gop_rng.randint(1, 25)
+setMarker(label="gop_version", marker="r%d" % gop_version)
+</exec>
+
+  <number label="XGOP_VERSION" size="2" where="execute,survey,report" optional="1"
+          title="GOP MaxDiff version assigned">
+    <comment>Version 1-25</comment>
+  </number>
+  <exec>
+XGOP_VERSION.val = gop_version
+</exec>
+
+  <!-- GOP MaxDiff Loop: 11 tasks -->
+  <loop label="GOP_MD_Loop" vars="GOP_MD_T" randomize="0" iterator="leasttaken">
+    <block label="b1">
+      <radio label="GOP_MD_T" atleast="1" adim="cols" grouping="cols" shuffle="rows"
+             style="maxdiff.6">
+        <title>
+          Please consider the following health care and wellness-related values and priorities.
+          Which is MOST important to you and which is LEAST important to you?
+        </title>
+        <comment>Select one for MOST and one for LEAST</comment>
+        <col label="c1">LEAST Important</col>
+        <col label="c2">MOST Important</col>
+        <row label="r1">Protecting traditional marriage and family values in health care policy</row>
+        <row label="r2">Holding Big Pharma accountable for putting profits over patients</row>
+        <row label="r3">Lowering prescription drug and hospital costs through market competition</row>
+        <row label="r4">Keeping rural hospitals open and funded</row>
+        <row label="r5">Protecting my right to refuse vaccines without government penalty</row>
+        <row label="r7">Using natural and holistic medicine instead of relying on pharmaceuticals</row>
+        <row label="r8">Eating whole, unprocessed food as the foundation of good health</row>
+        <row label="r9">Following a carnivore or low-carb diet for optimal wellness</row>
+        <row label="r10">Ensuring U.S. supply chain independence for medications and medical devices</row>
+        <row label="r11">Strengthening free market health care with less FDA red tape</row>
+        <row label="r12">Encouraging competition and deregulation to lower health insurance costs</row>
+      </radio>
+
+      <!-- Set up items per task -->
+      <exec when="init">
+setupMaxDiffItemsI(GOP_DESIGN, gop_version, loopvar.GOP_MD_Loop.index + 1, GOP_MD_T)
+</exec>
+    </block>
+
+    <looprow label="l1">Task 1</looprow>
+    <looprow label="l2">Task 2</looprow>
+    <looprow label="l3">Task 3</looprow>
+    <looprow label="l4">Task 4</looprow>
+    <looprow label="l5">Task 5</looprow>
+    <looprow label="l6">Task 6</looprow>
+    <looprow label="l7">Task 7</looprow>
+    <looprow label="l8">Task 8</looprow>
+    <looprow label="l9">Task 9</looprow>
+    <looprow label="l10">Task 10</looprow>
+    <looprow label="l11">Task 11</looprow>
+  </loop>
+
+  <!-- ============================================================== -->
+  <!-- GOP: B-W Score Computation                                     -->
+  <!-- ============================================================== -->
+  <text label="XGOP_BW" where="execute,survey,report" optional="1"
+        title="GOP Best-Worst Raw Scores">
+    <row label="r1">r1 Marriage/Family</row>
+    <row label="r2">r2 Pharma Distrust</row>
+    <row label="r3">r3 Drug/Hospital Prices</row>
+    <row label="r4">r4 Rural Hospitals</row>
+    <row label="r5">r5 Vaccine Skepticism</row>
+    <row label="r7">r7 Holistic Medicine</row>
+    <row label="r8">r8 Whole-Food Living</row>
+    <row label="r9">r9 Carnivore/Low-Carb</row>
+    <row label="r10">r10 US Supply Chain</row>
+    <row label="r11">r11 Free Market+FDA</row>
+    <row label="r12">r12 Competition/Dereg</row>
+    <col label="c1">BW Score</col>
+  </text>
+
+  <exec>
+# Compute B-W scores for GOP MaxDiff
+# For each item: BW = (times chosen MOST) - (times chosen LEAST) across all tasks
+gop_item_labels = ['r1', 'r2', 'r3', 'r4', 'r5', 'r7', 'r8', 'r9', 'r10', 'r11', 'r12']
+gop_bw = {}
+for rl in gop_item_labels:
+    best_count = 0
+    worst_count = 0
+    for task_idx in range(1, 12):
+        task_label = 'l%d' % task_idx
+        q = getattr(GOP_MD_Loop, task_label).GOP_MD_T
+        row = getattr(q, rl, None)
+        if row is not None:
+            if row.c2:   # MOST important
+                best_count += 1
+            if row.c1:   # LEAST important
+                worst_count += 1
+    gop_bw[rl] = best_count - worst_count
+    setattr(XGOP_BW, rl, {'c1': str(gop_bw[rl])})
+</exec>
+
+  <!-- ============================================================== -->
+  <!-- GOP: Z-Standardization and Centroid Distance Computation       -->
+  <!-- ============================================================== -->
+  <text label="XGOP_RAW" where="execute,survey,report" optional="1"
+        title="GOP Centroid Squared Distances">
+    <row label="r1">CEC</row>
+    <row label="r2">HHN</row>
+    <row label="r3">TC</row>
+    <row label="r4">PFF</row>
+    <row label="r5">PP</row>
+    <row label="r6">WE</row>
+    <row label="r7">HF</row>
+    <row label="r8">VS</row>
+    <row label="r9">MFL</row>
+    <row label="r10">TSP</row>
+    <col label="c1">Distance</col>
+  </text>
+
+  <text label="XGOP_SOFTMAX" where="execute,survey,report" optional="1"
+        title="GOP Softmax Probabilities">
+    <row label="r1">CEC</row>
+    <row label="r2">HHN</row>
+    <row label="r3">TC</row>
+    <row label="r4">PFF</row>
+    <row label="r5">PP</row>
+    <row label="r6">WE</row>
+    <row label="r7">HF</row>
+    <row label="r8">VS</row>
+    <row label="r9">MFL</row>
+    <row label="r10">TSP</row>
+    <col label="c1">Probability</col>
+  </text>
+
+  <radio label="XGOP_SEG_FINAL_1" optional="1" where="execute,survey,report"
+         title="GOP Primary Segment Assignment">
+    <row label="r1">CEC</row>
+    <row label="r2">HHN</row>
+    <row label="r3">TC</row>
+    <row label="r4">PFF</row>
+    <row label="r5">PP</row>
+    <row label="r6">WE</row>
+    <row label="r7">HF</row>
+    <row label="r8">VS</row>
+    <row label="r9">MFL</row>
+    <row label="r10">TSP</row>
+  </radio>
+
+  <radio label="XGOP_SEG_FINAL_2" optional="1" where="execute,survey,report"
+         title="GOP Runner-Up Segment">
+    <row label="r1">CEC</row>
+    <row label="r2">HHN</row>
+    <row label="r3">TC</row>
+    <row label="r4">PFF</row>
+    <row label="r5">PP</row>
+    <row label="r6">WE</row>
+    <row label="r7">HF</row>
+    <row label="r8">VS</row>
+    <row label="r9">MFL</row>
+    <row label="r10">TSP</row>
+  </radio>
+
+  <exec>
+# Z-standardize GOP BW scores
+gop_z = []
+for idx, rl in enumerate(gop_item_labels):
+    raw = float(gop_bw[rl])
+    mu, sigma = GOP_NORMS[idx]
+    z = (raw - mu) / sigma
+    gop_z.append(z)
+
+# Compute centroid distances
+gop_distances = algorithmCalculation(gop_z, GOP_CENTROIDS, 11)
+
+# Store raw distances
+gop_seg_labels = ['r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7', 'r8', 'r9', 'r10']
+for i, sl in enumerate(gop_seg_labels):
+    setattr(XGOP_RAW, sl, {'c1': '%.6f' % gop_distances[i]})
+
+# Compute softmax
+gop_softmax = softmaxFromDistances(gop_distances)
+for i, sl in enumerate(gop_seg_labels):
+    setattr(XGOP_SOFTMAX, sl, {'c1': '%.6f' % gop_softmax[i]})
+
+# Find primary and runner-up segments
+gop_sorted = sorted(range(10), key=lambda x: gop_distances[x])
+XGOP_SEG_FINAL_1.val = gop_seg_labels[gop_sorted[0]]
+XGOP_SEG_FINAL_2.val = gop_seg_labels[gop_sorted[1]]
+</exec>
+
+</block>
+
+
+<!-- ================================================================== -->
+<!-- DEM MAXDIFF BLOCK                                                  -->
+<!-- Condition: TYPING_MODULE = r2 (DEM only) or r3 (Both)             -->
+<!-- 8 items x 8 tasks x 4 items/task                                  -->
+<!-- ================================================================== -->
+<block label="DEMBlock" cond="TYPING_MODULE.r2 or TYPING_MODULE.r3">
+
+  <!-- Version assignment via quota -->
+  <quota label="DEM_Version_Quota" sheet="dem_version" overquota="noqual" usecond="0">
+    <title>DEM MaxDiff Version Assignment</title>
+    <row label="r1" cond="1" limit="0">Version 1</row>
+    <row label="r2" cond="1" limit="0">Version 2</row>
+    <row label="r3" cond="1" limit="0">Version 3</row>
+    <row label="r4" cond="1" limit="0">Version 4</row>
+    <row label="r5" cond="1" limit="0">Version 5</row>
+    <row label="r6" cond="1" limit="0">Version 6</row>
+    <row label="r7" cond="1" limit="0">Version 7</row>
+    <row label="r8" cond="1" limit="0">Version 8</row>
+    <row label="r9" cond="1" limit="0">Version 9</row>
+    <row label="r10" cond="1" limit="0">Version 10</row>
+    <row label="r11" cond="1" limit="0">Version 11</row>
+    <row label="r12" cond="1" limit="0">Version 12</row>
+    <row label="r13" cond="1" limit="0">Version 13</row>
+    <row label="r14" cond="1" limit="0">Version 14</row>
+    <row label="r15" cond="1" limit="0">Version 15</row>
+    <row label="r16" cond="1" limit="0">Version 16</row>
+    <row label="r17" cond="1" limit="0">Version 17</row>
+    <row label="r18" cond="1" limit="0">Version 18</row>
+    <row label="r19" cond="1" limit="0">Version 19</row>
+    <row label="r20" cond="1" limit="0">Version 20</row>
+    <row label="r21" cond="1" limit="0">Version 21</row>
+    <row label="r22" cond="1" limit="0">Version 22</row>
+    <row label="r23" cond="1" limit="0">Version 23</row>
+    <row label="r24" cond="1" limit="0">Version 24</row>
+    <row label="r25" cond="1" limit="0">Version 25</row>
+  </quota>
+
+  <exec>
+import random as _dem_rng
+dem_version = _dem_rng.randint(1, 25)
+setMarker(label="dem_version", marker="r%d" % dem_version)
+</exec>
+
+  <number label="XDEM_VERSION" size="2" where="execute,survey,report" optional="1"
+          title="DEM MaxDiff version assigned">
+    <comment>Version 1-25</comment>
+  </number>
+  <exec>
+XDEM_VERSION.val = dem_version
+</exec>
+
+  <!-- DEM MaxDiff Loop: 8 tasks -->
+  <loop label="DEM_MD_Loop" vars="DEM_MD_T" randomize="0" iterator="leasttaken">
+    <block label="b1">
+      <radio label="DEM_MD_T" atleast="1" adim="cols" grouping="cols" shuffle="rows"
+             style="maxdiff.6">
+        <title>
+          Please consider the following health care and wellness-related values and priorities.
+          Which is MOST important to you and which is LEAST important to you?
+        </title>
+        <comment>Select one for MOST and one for LEAST</comment>
+        <col label="c1">LEAST Important</col>
+        <col label="c2">MOST Important</col>
+        <row label="r1">Ensuring technology and health data systems are fair and equitable for all</row>
+        <row label="r2">Trusting mainstream medical experts and following evidence-based guidelines</row>
+        <row label="r3">Regulating digital health companies that disrupt traditional care models</row>
+        <row label="r4">Holding corporations accountable for health care greed and profiteering</row>
+        <row label="r5">Guaranteeing Medicare for All as a universal right</row>
+        <row label="r6">Protecting union health benefits and workers' access to quality care</row>
+        <row label="r7">Addressing racial and ethnic disparities in health care access and outcomes</row>
+        <row label="r9">Expanding faith-based community health programs and access</row>
+      </radio>
+
+      <exec when="init">
+setupMaxDiffItemsI(DEM_DESIGN, dem_version, loopvar.DEM_MD_Loop.index + 1, DEM_MD_T)
+</exec>
+    </block>
+
+    <looprow label="l1">Task 1</looprow>
+    <looprow label="l2">Task 2</looprow>
+    <looprow label="l3">Task 3</looprow>
+    <looprow label="l4">Task 4</looprow>
+    <looprow label="l5">Task 5</looprow>
+    <looprow label="l6">Task 6</looprow>
+    <looprow label="l7">Task 7</looprow>
+    <looprow label="l8">Task 8</looprow>
+  </loop>
+
+  <!-- ============================================================== -->
+  <!-- DEM: B-W Score Computation                                     -->
+  <!-- ============================================================== -->
+  <text label="XDEM_BW" where="execute,survey,report" optional="1"
+        title="DEM Best-Worst Raw Scores">
+    <row label="r1">r1 Tech/Data Equity</row>
+    <row label="r2">r2 Mainstream Experts</row>
+    <row label="r3">r3 Digital Disruption</row>
+    <row label="r4">r4 Corporate Greed</row>
+    <row label="r5">r5 Medicare for All</row>
+    <row label="r6">r6 Union Protection</row>
+    <row label="r7">r7 Racial Equity</row>
+    <row label="r9">r9 Faith-Based Access</row>
+    <col label="c1">BW Score</col>
+  </text>
+
+  <exec>
+# Compute B-W scores for DEM MaxDiff
+dem_item_labels = ['r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7', 'r9']
+dem_bw = {}
+for rl in dem_item_labels:
+    best_count = 0
+    worst_count = 0
+    for task_idx in range(1, 9):
+        task_label = 'l%d' % task_idx
+        q = getattr(DEM_MD_Loop, task_label).DEM_MD_T
+        row = getattr(q, rl, None)
+        if row is not None:
+            if row.c2:   # MOST important
+                best_count += 1
+            if row.c1:   # LEAST important
+                worst_count += 1
+    dem_bw[rl] = best_count - worst_count
+    setattr(XDEM_BW, rl, {'c1': str(dem_bw[rl])})
+</exec>
+
+</block>
+
+
+<!-- ================================================================== -->
+<!-- DEM ATTITUDINAL VECTORS (page.group.4)                             -->
+<!-- Condition: TYPING_MODULE = r2 (DEM only) or r3 (Both)             -->
+<!-- ================================================================== -->
+<block label="page_group_4" cond="TYPING_MODULE.r2 or TYPING_MODULE.r3">
+
+  <radio label="vector_justice" atleast="1" style="semantic.7">
+    <title>
+      To what extent do you agree or disagree with the following statement?
+    </title>
+    <comment>
+      "The health care system should prioritize justice and equity, ensuring
+      that marginalized communities receive fair access to quality care."
+    </comment>
+    <col label="c1">Strongly disagree</col>
+    <col label="c2">2</col>
+    <col label="c3">3</col>
+    <col label="c4">4</col>
+    <col label="c5">5</col>
+    <col label="c6">6</col>
+    <col label="c7">Strongly agree</col>
+    <row label="r1">Agreement</row>
+  </radio>
+
+  <radio label="vector_industry" atleast="1" style="semantic.7">
+    <title>
+      To what extent do you agree or disagree with the following statement?
+    </title>
+    <comment>
+      "Health care companies and the pharmaceutical industry generally act
+      in the best interest of patients."
+    </comment>
+    <col label="c1">Strongly disagree</col>
+    <col label="c2">2</col>
+    <col label="c3">3</col>
+    <col label="c4">4</col>
+    <col label="c5">5</col>
+    <col label="c6">6</col>
+    <col label="c7">Strongly agree</col>
+    <row label="r1">Agreement</row>
+  </radio>
+
+</block>
+
+
+<!-- ================================================================== -->
+<!-- DEM: Z-Standardization and Centroid Distance Computation           -->
+<!-- ================================================================== -->
+<text label="XDEM_RAW" where="execute,survey,report" optional="1"
+      cond="TYPING_MODULE.r2 or TYPING_MODULE.r3"
+      title="DEM Centroid Squared Distances">
+  <row label="r1">UCP</row>
+  <row label="r2">FJP</row>
+  <row label="r3">HCP</row>
+  <row label="r4">HAD</row>
+  <row label="r5">HCI</row>
+  <row label="r6">GHI</row>
+  <col label="c1">Distance</col>
+</text>
+
+<text label="XDEM_SOFTMAX" where="execute,survey,report" optional="1"
+      cond="TYPING_MODULE.r2 or TYPING_MODULE.r3"
+      title="DEM Softmax Probabilities">
+  <row label="r1">UCP</row>
+  <row label="r2">FJP</row>
+  <row label="r3">HCP</row>
+  <row label="r4">HAD</row>
+  <row label="r5">HCI</row>
+  <row label="r6">GHI</row>
+  <col label="c1">Probability</col>
+</text>
+
+<radio label="XDEM_SEG_FINAL_1" optional="1" where="execute,survey,report"
+       cond="TYPING_MODULE.r2 or TYPING_MODULE.r3"
+       title="DEM Primary Segment Assignment">
+  <row label="r1">UCP</row>
+  <row label="r2">FJP</row>
+  <row label="r3">HCP</row>
+  <row label="r4">HAD</row>
+  <row label="r5">HCI</row>
+  <row label="r6">GHI</row>
+</radio>
+
+<radio label="XDEM_SEG_FINAL_2" optional="1" where="execute,survey,report"
+       cond="TYPING_MODULE.r2 or TYPING_MODULE.r3"
+       title="DEM Runner-Up Segment">
+  <row label="r1">UCP</row>
+  <row label="r2">FJP</row>
+  <row label="r3">HCP</row>
+  <row label="r4">HAD</row>
+  <row label="r5">HCI</row>
+  <row label="r6">GHI</row>
+</radio>
+
+<exec cond="TYPING_MODULE.r2 or TYPING_MODULE.r3">
+# Get vector values
+# vector_justice: 1-7 scale, used directly
+justice_raw = 0
+for ci in range(1, 8):
+    cl = 'c%d' % ci
+    if getattr(vector_justice.r1, cl, False):
+        justice_raw = ci
+        break
+
+# vector_industry: 1-7 scale, REVERSE CODED: compute (8 - raw) before z-scoring
+industry_raw_direct = 0
+for ci in range(1, 8):
+    cl = 'c%d' % ci
+    if getattr(vector_industry.r1, cl, False):
+        industry_raw_direct = ci
+        break
+industry_raw = 8 - industry_raw_direct  # Reverse code
+
+# Z-standardize DEM BW scores (8 items)
+dem_z = []
+for idx, rl in enumerate(dem_item_labels):
+    raw = float(dem_bw[rl])
+    mu, sigma = DEM_NORMS[idx]
+    z = (raw - mu) / sigma
+    dem_z.append(z)
+
+# Append z-scored vectors as dimensions 9-10
+justice_z = (float(justice_raw) - DEM_NORMS[8][0]) / DEM_NORMS[8][1]
+industry_z = (float(industry_raw) - DEM_NORMS[9][0]) / DEM_NORMS[9][1]
+dem_z.append(justice_z)
+dem_z.append(industry_z)
+
+# Compute centroid distances (10 dimensions x 6 segments)
+dem_distances = algorithmCalculation(dem_z, DEM_CENTROIDS, 10)
+
+# Store raw distances
+dem_seg_labels = ['r1', 'r2', 'r3', 'r4', 'r5', 'r6']
+for i, sl in enumerate(dem_seg_labels):
+    setattr(XDEM_RAW, sl, {'c1': '%.6f' % dem_distances[i]})
+
+# Compute softmax
+dem_softmax = softmaxFromDistances(dem_distances)
+for i, sl in enumerate(dem_seg_labels):
+    setattr(XDEM_SOFTMAX, sl, {'c1': '%.6f' % dem_softmax[i]})
+
+# Find primary and runner-up segments
+dem_sorted = sorted(range(6), key=lambda x: dem_distances[x])
+XDEM_SEG_FINAL_1.val = dem_seg_labels[dem_sorted[0]]
+XDEM_SEG_FINAL_2.val = dem_seg_labels[dem_sorted[1]]
+</exec>
+
+
+<!-- ================================================================== -->
+<!-- CROSS-MODEL RESOLUTION: XSEG_ASSIGNED                             -->
+<!-- ================================================================== -->
+
+<!-- All 16 softmax probabilities in one grid -->
+<text label="XSOFTMAX_ALL" where="execute,survey,report" optional="1"
+      title="All 16 Softmax Probabilities">
+  <row label="r1">GOP: CEC</row>
+  <row label="r2">GOP: HHN</row>
+  <row label="r3">GOP: TC</row>
+  <row label="r4">GOP: PFF</row>
+  <row label="r5">GOP: PP</row>
+  <row label="r6">GOP: WE</row>
+  <row label="r7">GOP: HF</row>
+  <row label="r8">GOP: VS</row>
+  <row label="r9">GOP: MFL</row>
+  <row label="r10">GOP: TSP</row>
+  <row label="r11">DEM: UCP</row>
+  <row label="r12">DEM: FJP</row>
+  <row label="r13">DEM: HCP</row>
+  <row label="r14">DEM: HAD</row>
+  <row label="r15">DEM: HCI</row>
+  <row label="r16">DEM: GHI</row>
+  <col label="c1">Softmax Probability</col>
+</text>
+
+<!-- Final assigned segment (across all models) -->
+<radio label="XSEG_ASSIGNED" optional="1" where="execute,survey,report"
+       title="Final PRISM Segment Assignment">
+  <row label="r1">Consumer Empowerment Champions (CEC)</row>
+  <row label="r2">Holistic Health Naturalists (HHN)</row>
+  <row label="r3">Traditional Conservatives (TC)</row>
+  <row label="r4">Paleo Freedom Fighters (PFF)</row>
+  <row label="r5">Price Populists (PP)</row>
+  <row label="r6">Wellness Evangelists (WE)</row>
+  <row label="r7">Health Futurists (HF)</row>
+  <row label="r8">Vaccine Skeptics (VS)</row>
+  <row label="r9">Medical Freedom Libertarians (MFL)</row>
+  <row label="r10">Trust The Science Pragmatists (TSP)</row>
+  <row label="r11">Universal Care Progressives (UCP)</row>
+  <row label="r12">Faith and Justice Progressives (FJP)</row>
+  <row label="r13">Health Care Protectionists (HCP)</row>
+  <row label="r14">Health Abundance Democrats (HAD)</row>
+  <row label="r15">Health Care Incrementalists (HCI)</row>
+  <row label="r16">Global Health Institutionalists (GHI)</row>
+</radio>
+
+<float label="XSOFTMAX_TOP" where="execute,survey,report" optional="1"
+       title="Highest Softmax Probability (winning segment)" size="10"/>
+
+<!-- Confidence metrics -->
+<float label="XCENTROID_DIST1" where="execute,survey,report" optional="1"
+       title="Minimum Centroid Distance (squared)" size="10"/>
+<float label="XCENTROID_DIST2" where="execute,survey,report" optional="1"
+       title="Second-Minimum Centroid Distance (squared)" size="10"/>
+<float label="XREL_DIFF" where="execute,survey,report" optional="1"
+       title="Relative Difference (DIST2 - DIST1) / DIST1" size="10"/>
+<radio label="XBCS" optional="1" where="execute,survey,report"
+       title="Bayesian Confidence Score (classification confidence)">
+  <row label="r1">High</row>
+  <row label="r2">Medium</row>
+  <row label="r3">Low</row>
+</radio>
+
+<exec>
+# ---- Cross-model resolution ----
+# Build the full 16-element softmax vector
+all_softmax = [0.0] * 16
+all_distances = [999999.0] * 16  # large default distances
+
+# Fill GOP segments (r1-r10) if GOP model was taken
+if TYPING_MODULE.r1 or TYPING_MODULE.r3:
+    for i in range(10):
+        all_softmax[i] = gop_softmax[i]
+        all_distances[i] = gop_distances[i]
+
+# Fill DEM segments (r11-r16) if DEM model was taken
+if TYPING_MODULE.r2 or TYPING_MODULE.r3:
+    for i in range(6):
+        all_softmax[10 + i] = dem_softmax[i]
+        all_distances[10 + i] = dem_distances[i]
+
+# Store all 16 softmax values
+all_seg_labels = ['r%d' % (i + 1) for i in range(16)]
+for i in range(16):
+    setattr(XSOFTMAX_ALL, all_seg_labels[i], {'c1': '%.6f' % all_softmax[i]})
+
+# Find winning segment = highest softmax across all models taken
+best_idx = 0
+best_softmax = all_softmax[0]
+for i in range(1, 16):
+    if all_softmax[i] > best_softmax:
+        best_softmax = all_softmax[i]
+        best_idx = i
+
+XSEG_ASSIGNED.val = all_seg_labels[best_idx]
+XSOFTMAX_TOP.val = best_softmax
+
+# Confidence metrics: find two smallest distances among models taken
+active_distances = []
+active_indices = []
+if TYPING_MODULE.r1 or TYPING_MODULE.r3:
+    for i in range(10):
+        active_distances.append(gop_distances[i])
+        active_indices.append(i)
+if TYPING_MODULE.r2 or TYPING_MODULE.r3:
+    for i in range(6):
+        active_distances.append(dem_distances[i])
+        active_indices.append(10 + i)
+
+# Sort by distance
+sorted_pairs = sorted(zip(active_distances, active_indices))
+dist1 = sorted_pairs[0][0]
+dist2 = sorted_pairs[1][0] if len(sorted_pairs) > 1 else dist1
+
+XCENTROID_DIST1.val = dist1
+XCENTROID_DIST2.val = dist2
+
+# Relative difference
+if dist1 > 0.0001:
+    rel_diff = (dist2 - dist1) / dist1
+else:
+    rel_diff = 0.0
+XREL_DIFF.val = rel_diff
+
+# BCS: High/Medium/Low confidence flag (0.2 threshold on XREL_DIFF)
+if rel_diff >= 0.2:
+    XBCS.val = 'r1'   # High confidence
+elif rel_diff >= 0.0:
+    XBCS.val = 'r2'   # Medium confidence
+else:
+    XBCS.val = 'r3'   # Low confidence
+</exec>
+
+<!-- Store segment name as text for display -->
+<text label="XSEG_NAME" where="execute,survey,report" optional="1"
+      title="Assigned Segment Full Name" size="50">
+  <row label="r1">Name</row>
+  <col label="c1">Value</col>
+</text>
+
+<text label="XSEG_ABBREV" where="execute,survey,report" optional="1"
+      title="Assigned Segment Abbreviation" size="5">
+  <row label="r1">Abbrev</row>
+  <col label="c1">Value</col>
+</text>
+
+<exec>
+# Store segment name and abbreviation
+seg_num = int(XSEG_ASSIGNED.val.replace('r', ''))
+XSEG_NAME.r1 = {'c1': SEGMENT_NAMES.get(seg_num, 'Unknown')}
+XSEG_ABBREV.r1 = {'c1': SEGMENT_ABBREVS.get(seg_num, '??')}
+</exec>
+
+
+<!-- ================================================================== -->
+<!-- SEGMENT REVEAL (standalone mode only)                              -->
+<!-- ================================================================== -->
+<block label="segment_reveal" cond="standalone_mode == 1">
+
+  <html label="segment_reveal_page" where="survey">
+    <title>Your PRISM Health Segment</title>
+    <p>Based on your responses, you have been assigned to the following health segment:</p>
+    <div class="prism-segment-reveal">
+      <div class="prism-segment-card">
+        <div class="prism-segment-label">Your Segment</div>
+        <div class="prism-segment-name">[% XSEG_NAME.r1.c1 %]</div>
+        <div class="prism-segment-abbrev">([% XSEG_ABBREV.r1.c1 %])</div>
+        <div class="prism-segment-confidence">
+          Classification confidence:
+          [% if XBCS.r1 %]High[% endif %]
+          [% if XBCS.r2 %]Medium[% endif %]
+          [% if XBCS.r3 %]Low[% endif %]
+        </div>
+      </div>
+    </div>
+  </html>
+
+</block>
+
+</survey>
