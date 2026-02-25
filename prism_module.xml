@@ -526,17 +526,17 @@ setupMaxDiffItemsI(GOP_DESIGN, p.gop_version, loopvar.GOP_MD_Loop.index + 1, GOP
       <suspend/>
     </block>
 
-    <looprow label="l1">Task 1</looprow>
-    <looprow label="l2">Task 2</looprow>
-    <looprow label="l3">Task 3</looprow>
-    <looprow label="l4">Task 4</looprow>
-    <looprow label="l5">Task 5</looprow>
-    <looprow label="l6">Task 6</looprow>
-    <looprow label="l7">Task 7</looprow>
-    <looprow label="l8">Task 8</looprow>
-    <looprow label="l9">Task 9</looprow>
-    <looprow label="l10">Task 10</looprow>
-    <looprow label="l11">Task 11</looprow>
+    <looprow label="l1"><loopvar name="GOP_MD_T">Task 1</loopvar></looprow>
+    <looprow label="l2"><loopvar name="GOP_MD_T">Task 2</loopvar></looprow>
+    <looprow label="l3"><loopvar name="GOP_MD_T">Task 3</loopvar></looprow>
+    <looprow label="l4"><loopvar name="GOP_MD_T">Task 4</loopvar></looprow>
+    <looprow label="l5"><loopvar name="GOP_MD_T">Task 5</loopvar></looprow>
+    <looprow label="l6"><loopvar name="GOP_MD_T">Task 6</loopvar></looprow>
+    <looprow label="l7"><loopvar name="GOP_MD_T">Task 7</loopvar></looprow>
+    <looprow label="l8"><loopvar name="GOP_MD_T">Task 8</loopvar></looprow>
+    <looprow label="l9"><loopvar name="GOP_MD_T">Task 9</loopvar></looprow>
+    <looprow label="l10"><loopvar name="GOP_MD_T">Task 10</loopvar></looprow>
+    <looprow label="l11"><loopvar name="GOP_MD_T">Task 11</loopvar></looprow>
   </loop>
 
         <text label="XGOP_BW" where="execute,survey,report" optional="1">
@@ -778,14 +778,14 @@ setupMaxDiffItemsI(DEM_DESIGN, p.dem_version, loopvar.DEM_MD_Loop.index + 1, DEM
       <suspend/>
     </block>
 
-    <looprow label="l1">Task 1</looprow>
-    <looprow label="l2">Task 2</looprow>
-    <looprow label="l3">Task 3</looprow>
-    <looprow label="l4">Task 4</looprow>
-    <looprow label="l5">Task 5</looprow>
-    <looprow label="l6">Task 6</looprow>
-    <looprow label="l7">Task 7</looprow>
-    <looprow label="l8">Task 8</looprow>
+    <looprow label="l1"><loopvar name="DEM_MD_T">Task 1</loopvar></looprow>
+    <looprow label="l2"><loopvar name="DEM_MD_T">Task 2</loopvar></looprow>
+    <looprow label="l3"><loopvar name="DEM_MD_T">Task 3</loopvar></looprow>
+    <looprow label="l4"><loopvar name="DEM_MD_T">Task 4</loopvar></looprow>
+    <looprow label="l5"><loopvar name="DEM_MD_T">Task 5</loopvar></looprow>
+    <looprow label="l6"><loopvar name="DEM_MD_T">Task 6</loopvar></looprow>
+    <looprow label="l7"><loopvar name="DEM_MD_T">Task 7</loopvar></looprow>
+    <looprow label="l8"><loopvar name="DEM_MD_T">Task 8</loopvar></looprow>
   </loop>
 
         <text label="XDEM_BW" where="execute,survey,report" optional="1">
