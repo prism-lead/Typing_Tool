@@ -439,11 +439,15 @@ XGOP_VERSION.val = p.gop_version
 
   <suspend/>
 
-    <loop label="GOP_MD_Loop" randomize="0">
-    <block label="b1">
-      <radio label="GOP_MD_T" adim="cols" grouping="cols" shuffle="rows"
-             ss:listDisplay="0" ss:questionClassNames="prism-maxdiff">
+    <loop label="GOP_MD_Loop" vars="task" randomize="0">
+    <title>GOP MaxDiff Loop</title>
+    <block label="b1" randomize="1">
+      <radio label="GOP_MD_[loopvar: task]" adim="cols" grouping="cols" shuffle="rows"
+             ss:listDisplay="0" ss:questionClassNames="prism-maxdiff" unique="1">
         <title>Select the one statement that sounds <strong>MOST</strong> like your own point of view (on the left), and the statement that sounds <strong>LEAST</strong> like you (on the right)</title>
+        <exec>
+setupMaxDiffItemsI(GOP_DESIGN, p.gop_version, [loopvar: task], GOP_MD_[loopvar: task])
+        </exec>
         <comment>Select one for MOST and one for LEAST</comment>
         <col label="best"><strong>sounds MOST like me</strong></col>
         <col label="worst"><strong>sounds LEAST like me</strong></col>
@@ -519,24 +523,42 @@ XGOP_VERSION.val = p.gop_version
 ]]></style>
       </radio>
 
-      <exec>
-setupMaxDiffItemsI(GOP_DESIGN, p.gop_version, loopvar.GOP_MD_Loop.index + 1, GOP_MD_T)
-</exec>
-
       <suspend/>
     </block>
 
-    <looprow label="l1"/>
-    <looprow label="l2"/>
-    <looprow label="l3"/>
-    <looprow label="l4"/>
-    <looprow label="l5"/>
-    <looprow label="l6"/>
-    <looprow label="l7"/>
-    <looprow label="l8"/>
-    <looprow label="l9"/>
-    <looprow label="l10"/>
-    <looprow label="l11"/>
+    <looprow label="1">
+      <loopvar name="task">1</loopvar>
+    </looprow>
+    <looprow label="2">
+      <loopvar name="task">2</loopvar>
+    </looprow>
+    <looprow label="3">
+      <loopvar name="task">3</loopvar>
+    </looprow>
+    <looprow label="4">
+      <loopvar name="task">4</loopvar>
+    </looprow>
+    <looprow label="5">
+      <loopvar name="task">5</loopvar>
+    </looprow>
+    <looprow label="6">
+      <loopvar name="task">6</loopvar>
+    </looprow>
+    <looprow label="7">
+      <loopvar name="task">7</loopvar>
+    </looprow>
+    <looprow label="8">
+      <loopvar name="task">8</loopvar>
+    </looprow>
+    <looprow label="9">
+      <loopvar name="task">9</loopvar>
+    </looprow>
+    <looprow label="10">
+      <loopvar name="task">10</loopvar>
+    </looprow>
+    <looprow label="11">
+      <loopvar name="task">11</loopvar>
+    </looprow>
   </loop>
 
         <text label="XGOP_BW" where="execute,survey,report" optional="1">
@@ -564,13 +586,12 @@ for rl in gop_item_labels:
     best_count = 0
     worst_count = 0
     for task_idx in range(1, 12):
-        task_label = 'l%d' % task_idx
-        q = getattr(GOP_MD_Loop, task_label).GOP_MD_T
+        q = allQuestions["GOP_MD_%d" % task_idx]
         row = getattr(q, rl, None)
         if row is not None:
-            if row.best:   # MOST important
+            if row.best:
                 best_count += 1
-            if row.worst:   # LEAST important
+            if row.worst:
                 worst_count += 1
     gop_bw[rl] = best_count - worst_count
     getattr(XGOP_BW, rl).c1 = str(gop_bw[rl])
