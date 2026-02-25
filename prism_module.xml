@@ -309,7 +309,8 @@ else:
 
 <suspend/>
 
-<number label="qparty" size="1" where="execute,survey,report" optional="1" title="Derived 7-point party ID scale">
+<number label="qparty" size="1" where="execute,survey,report" optional="1">
+  <title>Derived 7-point party ID scale</title>
   <comment>1=Strong R, 2=Weak R, 3=Lean R, 4=Indep, 5=Lean D, 6=Weak D, 7=Strong D</comment>
 </number>
 
@@ -356,8 +357,8 @@ qparty.val = qparty_val
   <row label="r3">Both Models</row>
 </radio>
 
-<number label="XTYPING_TERM" size="1" where="execute,survey,report" optional="1"
-        title="True Independent termination flag (1=terminate)">
+<number label="XTYPING_TERM" size="1" where="execute,survey,report" optional="1">
+  <title>True Independent termination flag (1=terminate)</title>
   <comment>1 = true independent who voted third-party, should be terminated</comment>
 </number>
 
@@ -428,8 +429,8 @@ p.gop_version = gop_version
 setMarker(label="gop_version", marker="r%d" % gop_version)
 </exec>
 
-  <number label="XGOP_VERSION" size="2" where="execute,survey,report" optional="1"
-          title="GOP MaxDiff version assigned">
+  <number label="XGOP_VERSION" size="2" where="execute,survey,report" optional="1">
+    <title>GOP MaxDiff version assigned</title>
     <comment>Version 1-25</comment>
   </number>
   <exec>
@@ -441,7 +442,7 @@ XGOP_VERSION.val = p.gop_version
     <loop label="GOP_MD_Loop" vars="GOP_MD_T" randomize="0">
     <block label="b1">
       <radio label="GOP_MD_T" adim="cols" grouping="cols" shuffle="rows"
-             ss:listDisplay="0" ss:questionClassNames="prism-maxdiff" unique="1">
+             ss:listDisplay="0" ss:questionClassNames="prism-maxdiff">
         <title>Select the one statement that sounds <strong>MOST</strong> like your own point of view (on the left), and the statement that sounds <strong>LEAST</strong> like you (on the right)</title>
         <comment>Select one for MOST and one for LEAST</comment>
         <col label="best"><strong>sounds MOST like me</strong></col>
@@ -538,8 +539,8 @@ setupMaxDiffItemsI(GOP_DESIGN, p.gop_version, loopvar.GOP_MD_Loop.index + 1, GOP
     <looprow label="l11">Task 11</looprow>
   </loop>
 
-        <text label="XGOP_BW" where="execute,survey,report" optional="1"
-        title="GOP Best-Worst Raw Scores">
+        <text label="XGOP_BW" where="execute,survey,report" optional="1">
+    <title>GOP Best-Worst Raw Scores</title>
     <row label="r1">r1 Marriage/Family</row>
     <row label="r2">r2 Pharma Distrust</row>
     <row label="r3">r3 Drug/Hospital Prices</row>
@@ -579,8 +580,8 @@ p.gop_bw = gop_bw
 p.gop_item_labels = gop_item_labels
 </exec>
 
-        <text label="XGOP_RAW" where="execute,survey,report" optional="1"
-        title="GOP Centroid Squared Distances">
+        <text label="XGOP_RAW" where="execute,survey,report" optional="1">
+    <title>GOP Centroid Squared Distances</title>
     <row label="r1">CEC</row>
     <row label="r2">HHN</row>
     <row label="r3">TC</row>
@@ -594,8 +595,8 @@ p.gop_item_labels = gop_item_labels
     <col label="c1">Distance</col>
   </text>
 
-  <text label="XGOP_SOFTMAX" where="execute,survey,report" optional="1"
-        title="GOP Softmax Probabilities">
+  <text label="XGOP_SOFTMAX" where="execute,survey,report" optional="1">
+    <title>GOP Softmax Probabilities</title>
     <row label="r1">CEC</row>
     <row label="r2">HHN</row>
     <row label="r3">TC</row>
@@ -609,8 +610,8 @@ p.gop_item_labels = gop_item_labels
     <col label="c1">Probability</col>
   </text>
 
-  <radio label="XGOP_SEG_FINAL_1" optional="1" where="execute,survey,report"
-         title="GOP Primary Segment Assignment">
+  <radio label="XGOP_SEG_FINAL_1" optional="1" where="execute,survey,report">
+    <title>GOP Primary Segment Assignment</title>
     <row label="r1">CEC</row>
     <row label="r2">HHN</row>
     <row label="r3">TC</row>
@@ -623,8 +624,8 @@ p.gop_item_labels = gop_item_labels
     <row label="r10">TSP</row>
   </radio>
 
-  <radio label="XGOP_SEG_FINAL_2" optional="1" where="execute,survey,report"
-         title="GOP Runner-Up Segment">
+  <radio label="XGOP_SEG_FINAL_2" optional="1" where="execute,survey,report">
+    <title>GOP Runner-Up Segment</title>
     <row label="r1">CEC</row>
     <row label="r2">HHN</row>
     <row label="r3">TC</row>
@@ -683,8 +684,8 @@ p.dem_version = dem_version
 setMarker(label="dem_version", marker="r%d" % dem_version)
 </exec>
 
-  <number label="XDEM_VERSION" size="2" where="execute,survey,report" optional="1"
-          title="DEM MaxDiff version assigned">
+  <number label="XDEM_VERSION" size="2" where="execute,survey,report" optional="1">
+    <title>DEM MaxDiff version assigned</title>
     <comment>Version 1-25</comment>
   </number>
   <exec>
@@ -696,7 +697,7 @@ XDEM_VERSION.val = p.dem_version
     <loop label="DEM_MD_Loop" vars="DEM_MD_T" randomize="0">
     <block label="b2">
       <radio label="DEM_MD_T" adim="cols" grouping="cols" shuffle="rows"
-             ss:listDisplay="0" ss:questionClassNames="prism-maxdiff" unique="1">
+             ss:listDisplay="0" ss:questionClassNames="prism-maxdiff">
         <title>Select the one statement that sounds <strong>MOST</strong> like your own point of view (on the left), and the statement that sounds <strong>LEAST</strong> like you (on the right)</title>
         <comment>Select one for MOST and one for LEAST</comment>
         <col label="best"><strong>sounds MOST like me</strong></col>
@@ -787,8 +788,8 @@ setupMaxDiffItemsI(DEM_DESIGN, p.dem_version, loopvar.DEM_MD_Loop.index + 1, DEM
     <looprow label="l8">Task 8</looprow>
   </loop>
 
-        <text label="XDEM_BW" where="execute,survey,report" optional="1"
-        title="DEM Best-Worst Raw Scores">
+        <text label="XDEM_BW" where="execute,survey,report" optional="1">
+    <title>DEM Best-Worst Raw Scores</title>
     <row label="r1">r1 Tech/Data Equity</row>
     <row label="r2">r2 Mainstream Experts</row>
     <row label="r3">r3 Digital Disruption</row>
@@ -881,8 +882,8 @@ p.dem_item_labels = dem_item_labels
 </block>
 
 <text label="XDEM_RAW" where="execute,survey,report" optional="1"
-      cond="TYPING_MODULE.r2 or TYPING_MODULE.r3"
-      title="DEM Centroid Squared Distances">
+      cond="TYPING_MODULE.r2 or TYPING_MODULE.r3">
+  <title>DEM Centroid Squared Distances</title>
   <row label="r1">UCP</row>
   <row label="r2">FJP</row>
   <row label="r3">HCP</row>
@@ -893,8 +894,8 @@ p.dem_item_labels = dem_item_labels
 </text>
 
 <text label="XDEM_SOFTMAX" where="execute,survey,report" optional="1"
-      cond="TYPING_MODULE.r2 or TYPING_MODULE.r3"
-      title="DEM Softmax Probabilities">
+      cond="TYPING_MODULE.r2 or TYPING_MODULE.r3">
+  <title>DEM Softmax Probabilities</title>
   <row label="r1">UCP</row>
   <row label="r2">FJP</row>
   <row label="r3">HCP</row>
@@ -905,8 +906,8 @@ p.dem_item_labels = dem_item_labels
 </text>
 
 <radio label="XDEM_SEG_FINAL_1" optional="1" where="execute,survey,report"
-       cond="TYPING_MODULE.r2 or TYPING_MODULE.r3"
-       title="DEM Primary Segment Assignment">
+       cond="TYPING_MODULE.r2 or TYPING_MODULE.r3">
+  <title>DEM Primary Segment Assignment</title>
   <row label="r1">UCP</row>
   <row label="r2">FJP</row>
   <row label="r3">HCP</row>
@@ -916,8 +917,8 @@ p.dem_item_labels = dem_item_labels
 </radio>
 
 <radio label="XDEM_SEG_FINAL_2" optional="1" where="execute,survey,report"
-       cond="TYPING_MODULE.r2 or TYPING_MODULE.r3"
-       title="DEM Runner-Up Segment">
+       cond="TYPING_MODULE.r2 or TYPING_MODULE.r3">
+  <title>DEM Runner-Up Segment</title>
   <row label="r1">UCP</row>
   <row label="r2">FJP</row>
   <row label="r3">HCP</row>
@@ -986,8 +987,8 @@ p.dem_softmax = dem_softmax
 p.dem_distances = dem_distances
 </exec>
 
-<text label="XSOFTMAX_ALL" where="execute,survey,report" optional="1"
-      title="All 16 Softmax Probabilities">
+<text label="XSOFTMAX_ALL" where="execute,survey,report" optional="1">
+  <title>All 16 Softmax Probabilities</title>
   <row label="r1">GOP: CEC</row>
   <row label="r2">GOP: HHN</row>
   <row label="r3">GOP: TC</row>
@@ -1007,8 +1008,8 @@ p.dem_distances = dem_distances
   <col label="c1">Softmax Probability</col>
 </text>
 
-<radio label="XSEG_ASSIGNED" optional="1" where="execute,survey,report"
-       title="Final PRISM Segment Assignment">
+<radio label="XSEG_ASSIGNED" optional="1" where="execute,survey,report">
+  <title>Final PRISM Segment Assignment</title>
   <row label="r1">Consumer Empowerment Champions (CEC)</row>
   <row label="r2">Holistic Health Naturalists (HHN)</row>
   <row label="r3">Traditional Conservatives (TC)</row>
@@ -1027,17 +1028,21 @@ p.dem_distances = dem_distances
   <row label="r16">Global Health Institutionalists (GHI)</row>
 </radio>
 
-<float label="XSOFTMAX_TOP" where="execute,survey,report" optional="1"
-       title="Highest Softmax Probability (winning segment)" size="10"/>
+<float label="XSOFTMAX_TOP" where="execute,survey,report" optional="1" size="10">
+  <title>Highest Softmax Probability (winning segment)</title>
+</float>
 
-<float label="XCENTROID_DIST1" where="execute,survey,report" optional="1"
-       title="Minimum Centroid Distance (squared)" size="10"/>
-<float label="XCENTROID_DIST2" where="execute,survey,report" optional="1"
-       title="Second-Minimum Centroid Distance (squared)" size="10"/>
-<float label="XREL_DIFF" where="execute,survey,report" optional="1"
-       title="Relative Difference (DIST2 - DIST1) / DIST1" size="10"/>
-<radio label="XBCS" optional="1" where="execute,survey,report"
-       title="Bayesian Confidence Score (classification confidence)">
+<float label="XCENTROID_DIST1" where="execute,survey,report" optional="1" size="10">
+  <title>Minimum Centroid Distance (squared)</title>
+</float>
+<float label="XCENTROID_DIST2" where="execute,survey,report" optional="1" size="10">
+  <title>Second-Minimum Centroid Distance (squared)</title>
+</float>
+<float label="XREL_DIFF" where="execute,survey,report" optional="1" size="10">
+  <title>Relative Difference (DIST2 - DIST1) / DIST1</title>
+</float>
+<radio label="XBCS" optional="1" where="execute,survey,report">
+  <title>Bayesian Confidence Score (classification confidence)</title>
   <row label="r1">High</row>
   <row label="r2">Medium</row>
   <row label="r3">Low</row>
@@ -1117,14 +1122,14 @@ else:
     XBCS.val = 'r3'   # Low confidence
 </exec>
 
-<text label="XSEG_NAME" where="execute,survey,report" optional="1"
-      title="Assigned Segment Full Name" size="50">
+<text label="XSEG_NAME" where="execute,survey,report" optional="1" size="50">
+  <title>Assigned Segment Full Name</title>
   <row label="r1">Name</row>
   <col label="c1">Value</col>
 </text>
 
-<text label="XSEG_ABBREV" where="execute,survey,report" optional="1"
-      title="Assigned Segment Abbreviation" size="5">
+<text label="XSEG_ABBREV" where="execute,survey,report" optional="1" size="5">
+  <title>Assigned Segment Abbreviation</title>
   <row label="r1">Abbrev</row>
   <col label="c1">Value</col>
 </text>
