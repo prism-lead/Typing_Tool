@@ -7,7 +7,6 @@
   extraVariables="source,list,camp,lang"
   fir="on"
   mobile="compat"
-  mession="0"
   name="PRISM Survey Engine v1.0"
   setup="time,term"
   ss:disablealiasing="1"
@@ -21,6 +20,7 @@ standalone_mode = 0
 
 <exec when="init">
 import math
+import random
 
 # MaxDiff design file loaders
 def setupMaxDiffFile(filename):
@@ -39,13 +39,16 @@ def setupMaxDiffFile(filename):
     return designs
 
 def setupMaxDiffItemsI(designs, version, task, question):
-    """Set up MaxDiff items for a given version/task by showing only the items in the design."""
+    """Set up MaxDiff items for a given version/task by disabling rows not in the design."""
     items = designs.get((version, task), [])
-    for row in question.rows:
-        if int(row.label.replace('r', '')) in items:
-            row.show()
-        else:
-            row.hide()
+    item_index = {}
+    for r in question.rows:
+        num = int(r.o.label.replace('r', ''))
+        item_index[str(num)] = r.index
+        if num not in items:
+            r.disabled = True
+    # Set display order to match design file order
+    question.rows.order = [item_index[str(i)] for i in items if str(i) in item_index]
 
 # Centroid distance computation
 def algorithmCalculation(z_scores, centroids, n_dims):
@@ -194,7 +197,7 @@ DEM_DESIGN = setupMaxDiffFile("DemDesign.dat")
   <p class="prism-section-label">SECTION 1: BACKGROUND INFO</p>
 </html>
 
-<radio label="qvote" atleast="1"
+<radio label="qvote" optional="0"
        ss:questionClassNames="prism-hpill">
   <title><strong>Are you registered to vote?</strong></title>
   <comment>1 of 6 Questions</comment>
@@ -229,7 +232,7 @@ DEM_DESIGN = setupMaxDiffFile("DemDesign.dat")
 
 <term label="Term_qage" cond="qage.r99">Thank you, but we need your age to continue.</term>
 
-<radio label="qgender" atleast="1"
+<radio label="qgender" optional="0"
        ss:questionClassNames="prism-hpill">
   <title><strong>What is your gender?</strong></title>
   <comment>4 of 6 Questions</comment>
@@ -241,7 +244,7 @@ DEM_DESIGN = setupMaxDiffFile("DemDesign.dat")
 
 <suspend/>
 
-<radio label="q2024vote" atleast="1"
+<radio label="q2024vote" optional="0"
        ss:questionClassNames="prism-ballot">
   <title><strong>Who did you vote for in the latest (2024) Presidential election?</strong></title>
   <comment>5 of 6 Questions</comment>
@@ -256,7 +259,7 @@ DEM_DESIGN = setupMaxDiffFile("DemDesign.dat")
 
 <term label="Term_q2024vote" cond="q2024vote.r4 or q2024vote.r99">Thank you, but we need to know about your 2024 vote to continue.</term>
 
-<radio label="qparty1" atleast="1"
+<radio label="qparty1" optional="0"
        ss:questionClassNames="prism-partyid">
   <title><strong>In politics today, do you consider yourself a...?</strong></title>
   <comment>6 of 6 Questions</comment>
@@ -270,20 +273,26 @@ DEM_DESIGN = setupMaxDiffFile("DemDesign.dat")
 
 <term label="Term_qparty1" cond="qparty1.r99">Thank you for your interest, but we need this information to continue.</term>
 
-<radio label="qparty2" atleast="1" cond="qparty1.r1 or qparty1.r2"
+<exec>
+if qparty1.r1:
+    party_name_text = "Republican"
+elif qparty1.r2:
+    party_name_text = "Democrat"
+else:
+    party_name_text = ""
+</exec>
+
+<radio label="qparty2" cond="qparty1.r1 or qparty1.r2"
        ss:questionClassNames="prism-pill">
-  <title>Would you say you are a strong or not-so-strong <pipe label="partyname">
-      <case label="c1" cond="qparty1.r1">Republican</case>
-      <case label="c2" cond="qparty1.r2">Democrat</case>
-    </pipe>?</title>
+  <title>Would you say you are a strong or not-so-strong [% party_name_text %]?</title>
   <row label="r1">Strong</row>
   <row label="r2">Not-so-strong</row>
   <noanswer label="r99">Prefer not to respond</noanswer>
 </radio>
 
-<suspend/>
+<suspend cond="qparty1.r1 or qparty1.r2"/>
 
-<radio label="qparty3" atleast="1" cond="qparty1.r3"
+<radio label="qparty3" cond="qparty1.r3"
        ss:questionClassNames="prism-partyid">
   <title><strong>Do you lean toward the...?</strong></title>
   <row label="r1"><img src="[survey]GOP Icon.svg" alt="" class="prism-party-icon" /> Republicans</row>
@@ -292,13 +301,17 @@ DEM_DESIGN = setupMaxDiffFile("DemDesign.dat")
   <noanswer label="r99">Prefer not to respond</noanswer>
 </radio>
 
-<suspend/>
+<suspend cond="qparty1.r3"/>
 
 <html label="privacy_footer" where="survey" ss:questionClassNames="prism-footer">
   <p class="prism-privacy">Your responses are held strictly confidential. See our Privacy Policy and commitment to protect all information and things.</p>
 </html>
 
 <suspend/>
+
+<number label="qparty" size="1" where="execute,survey,report" optional="1" title="Derived 7-point party ID scale">
+  <comment>1=Strong R, 2=Weak R, 3=Lean R, 4=Indep, 5=Lean D, 6=Weak D, 7=Strong D</comment>
+</number>
 
 <exec>
 # Derive qparty: 7-point scale (1=Strong R ... 7=Strong D)
@@ -336,10 +349,6 @@ elif qparty1.r3:
 qparty.val = qparty_val
 </exec>
 
-<number label="qparty" size="1" where="execute,survey,report" optional="1" title="Derived 7-point party ID scale">
-  <comment>1=Strong R, 2=Weak R, 3=Lean R, 4=Indep, 5=Lean D, 6=Weak D, 7=Strong D</comment>
-</number>
-
 <radio label="TYPING_MODULE" optional="1" where="execute,survey,report">
   <title>Typing Module Assignment</title>
   <row label="r1">GOP Model Only</row>
@@ -347,35 +356,42 @@ qparty.val = qparty_val
   <row label="r3">Both Models</row>
 </radio>
 
+<number label="XTYPING_TERM" size="1" where="execute,survey,report" optional="1"
+        title="True Independent termination flag (1=terminate)">
+  <comment>1 = true independent who voted third-party, should be terminated</comment>
+</number>
+
 <exec>
 # TYPING_MODULE assignment rules based on q2024vote and qparty
-p = qparty.val
+p.typing_term = 0
+p_val = qparty.val
 
 if q2024vote.r1:
     # Voted Trump
-    if p &lt; 5:
+    if p_val &lt; 5:
         TYPING_MODULE.val = 'r1'   # GOP only
     else:
         TYPING_MODULE.val = 'r3'   # Both
 elif q2024vote.r2:
     # Voted Harris
-    if p &lt; 4:
+    if p_val &lt; 4:
         TYPING_MODULE.val = 'r3'   # Both
     else:
         TYPING_MODULE.val = 'r2'   # DEM only
 elif q2024vote.r3:
     # Voted other candidate
-    if p &lt;= 2:
+    if p_val &lt;= 2:
         TYPING_MODULE.val = 'r1'   # GOP only (Strong R or Weak R)
-    elif p == 3:
+    elif p_val == 3:
         TYPING_MODULE.val = 'r3'   # Both (Lean R)
-    elif p == 4:
-        TYPING_MODULE.val = 'TERM' # True independent - terminate
-    elif p &gt;= 5:
+    elif p_val == 4:
+        p.typing_term = 1          # True independent - flag for termination
+        XTYPING_TERM.val = 1
+    elif p_val &gt;= 5:
         TYPING_MODULE.val = 'r2'   # DEM only
 </exec>
 
-<term label="Term_true_independent" cond="TYPING_MODULE.val == 'TERM'">Thank you for your interest, but this study requires respondents with a party leaning.</term>
+<term label="Term_true_independent" cond="p.typing_term == 1">Thank you for your interest, but this study requires respondents with a party leaning.</term>
 
 <suspend/>
 
@@ -406,38 +422,9 @@ elif q2024vote.r3:
 
 <block label="GOPBlock" cond="TYPING_MODULE.r1 or TYPING_MODULE.r3">
 
-    <quota label="GOP_Version_Quota" sheet="gop_version" overquota="noqual" usecond="0">
-    <title>GOP MaxDiff Version Assignment</title>
-    <row label="r1" cond="1" limit="0">Version 1</row>
-    <row label="r2" cond="1" limit="0">Version 2</row>
-    <row label="r3" cond="1" limit="0">Version 3</row>
-    <row label="r4" cond="1" limit="0">Version 4</row>
-    <row label="r5" cond="1" limit="0">Version 5</row>
-    <row label="r6" cond="1" limit="0">Version 6</row>
-    <row label="r7" cond="1" limit="0">Version 7</row>
-    <row label="r8" cond="1" limit="0">Version 8</row>
-    <row label="r9" cond="1" limit="0">Version 9</row>
-    <row label="r10" cond="1" limit="0">Version 10</row>
-    <row label="r11" cond="1" limit="0">Version 11</row>
-    <row label="r12" cond="1" limit="0">Version 12</row>
-    <row label="r13" cond="1" limit="0">Version 13</row>
-    <row label="r14" cond="1" limit="0">Version 14</row>
-    <row label="r15" cond="1" limit="0">Version 15</row>
-    <row label="r16" cond="1" limit="0">Version 16</row>
-    <row label="r17" cond="1" limit="0">Version 17</row>
-    <row label="r18" cond="1" limit="0">Version 18</row>
-    <row label="r19" cond="1" limit="0">Version 19</row>
-    <row label="r20" cond="1" limit="0">Version 20</row>
-    <row label="r21" cond="1" limit="0">Version 21</row>
-    <row label="r22" cond="1" limit="0">Version 22</row>
-    <row label="r23" cond="1" limit="0">Version 23</row>
-    <row label="r24" cond="1" limit="0">Version 24</row>
-    <row label="r25" cond="1" limit="0">Version 25</row>
-  </quota>
-
   <exec>
-import random as _gop_rng
-gop_version = _gop_rng.randint(1, 25)
+gop_version = random.randint(1, 25)
+p.gop_version = gop_version
 setMarker(label="gop_version", marker="r%d" % gop_version)
 </exec>
 
@@ -446,14 +433,14 @@ setMarker(label="gop_version", marker="r%d" % gop_version)
     <comment>Version 1-25</comment>
   </number>
   <exec>
-XGOP_VERSION.val = gop_version
+XGOP_VERSION.val = p.gop_version
 </exec>
 
   <suspend/>
 
-    <loop label="GOP_MD_Loop" vars="GOP_MD_T" randomize="0" iterator="leasttaken">
+    <loop label="GOP_MD_Loop" vars="GOP_MD_T" randomize="0">
     <block label="b1">
-      <radio label="GOP_MD_T" atleast="1" adim="cols" grouping="cols" shuffle="rows"
+      <radio label="GOP_MD_T" adim="cols" grouping="cols" shuffle="rows"
              ss:listDisplay="0" ss:questionClassNames="prism-maxdiff" unique="1">
         <title>Select the one statement that sounds <strong>MOST</strong> like your own point of view (on the left), and the statement that sounds <strong>LEAST</strong> like you (on the right)</title>
         <comment>Select one for MOST and one for LEAST</comment>
@@ -531,8 +518,8 @@ XGOP_VERSION.val = gop_version
 ]]></style>
       </radio>
 
-            <exec when="init">
-setupMaxDiffItemsI(GOP_DESIGN, gop_version, loopvar.GOP_MD_Loop.index + 1, GOP_MD_T)
+      <exec>
+setupMaxDiffItemsI(GOP_DESIGN, p.gop_version, loopvar.GOP_MD_Loop.index + 1, GOP_MD_T)
 </exec>
 
       <suspend/>
@@ -585,7 +572,11 @@ for rl in gop_item_labels:
             if row.worst:   # LEAST important
                 worst_count += 1
     gop_bw[rl] = best_count - worst_count
-    setattr(XGOP_BW, rl, {'c1': str(gop_bw[rl])})
+    getattr(XGOP_BW, rl).c1 = str(gop_bw[rl])
+
+# Persist for use in Z-standardization exec block
+p.gop_bw = gop_bw
+p.gop_item_labels = gop_item_labels
 </exec>
 
         <text label="XGOP_RAW" where="execute,survey,report" optional="1"
@@ -647,6 +638,10 @@ for rl in gop_item_labels:
   </radio>
 
   <exec>
+# Restore persisted BW scores
+gop_bw = p.gop_bw
+gop_item_labels = p.gop_item_labels
+
 # Z-standardize GOP BW scores
 gop_z = []
 for idx, rl in enumerate(gop_item_labels):
@@ -661,55 +656,30 @@ gop_distances = algorithmCalculation(gop_z, GOP_CENTROIDS, 11)
 # Store raw distances
 gop_seg_labels = ['r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7', 'r8', 'r9', 'r10']
 for i, sl in enumerate(gop_seg_labels):
-    setattr(XGOP_RAW, sl, {'c1': '%.6f' % gop_distances[i]})
+    getattr(XGOP_RAW, sl).c1 = '%.6f' % gop_distances[i]
 
 # Compute softmax
 gop_softmax = softmaxFromDistances(gop_distances)
 for i, sl in enumerate(gop_seg_labels):
-    setattr(XGOP_SOFTMAX, sl, {'c1': '%.6f' % gop_softmax[i]})
+    getattr(XGOP_SOFTMAX, sl).c1 = '%.6f' % gop_softmax[i]
 
 # Find primary and runner-up segments
 gop_sorted = sorted(range(10), key=lambda x: gop_distances[x])
 XGOP_SEG_FINAL_1.val = gop_seg_labels[gop_sorted[0]]
 XGOP_SEG_FINAL_2.val = gop_seg_labels[gop_sorted[1]]
+
+# Persist for cross-model resolution
+p.gop_softmax = gop_softmax
+p.gop_distances = gop_distances
 </exec>
 
 </block>
 
 <block label="DEMBlock" cond="TYPING_MODULE.r2 or TYPING_MODULE.r3">
 
-    <quota label="DEM_Version_Quota" sheet="dem_version" overquota="noqual" usecond="0">
-    <title>DEM MaxDiff Version Assignment</title>
-    <row label="r1" cond="1" limit="0">Version 1</row>
-    <row label="r2" cond="1" limit="0">Version 2</row>
-    <row label="r3" cond="1" limit="0">Version 3</row>
-    <row label="r4" cond="1" limit="0">Version 4</row>
-    <row label="r5" cond="1" limit="0">Version 5</row>
-    <row label="r6" cond="1" limit="0">Version 6</row>
-    <row label="r7" cond="1" limit="0">Version 7</row>
-    <row label="r8" cond="1" limit="0">Version 8</row>
-    <row label="r9" cond="1" limit="0">Version 9</row>
-    <row label="r10" cond="1" limit="0">Version 10</row>
-    <row label="r11" cond="1" limit="0">Version 11</row>
-    <row label="r12" cond="1" limit="0">Version 12</row>
-    <row label="r13" cond="1" limit="0">Version 13</row>
-    <row label="r14" cond="1" limit="0">Version 14</row>
-    <row label="r15" cond="1" limit="0">Version 15</row>
-    <row label="r16" cond="1" limit="0">Version 16</row>
-    <row label="r17" cond="1" limit="0">Version 17</row>
-    <row label="r18" cond="1" limit="0">Version 18</row>
-    <row label="r19" cond="1" limit="0">Version 19</row>
-    <row label="r20" cond="1" limit="0">Version 20</row>
-    <row label="r21" cond="1" limit="0">Version 21</row>
-    <row label="r22" cond="1" limit="0">Version 22</row>
-    <row label="r23" cond="1" limit="0">Version 23</row>
-    <row label="r24" cond="1" limit="0">Version 24</row>
-    <row label="r25" cond="1" limit="0">Version 25</row>
-  </quota>
-
   <exec>
-import random as _dem_rng
-dem_version = _dem_rng.randint(1, 25)
+dem_version = random.randint(1, 25)
+p.dem_version = dem_version
 setMarker(label="dem_version", marker="r%d" % dem_version)
 </exec>
 
@@ -718,14 +688,14 @@ setMarker(label="dem_version", marker="r%d" % dem_version)
     <comment>Version 1-25</comment>
   </number>
   <exec>
-XDEM_VERSION.val = dem_version
+XDEM_VERSION.val = p.dem_version
 </exec>
 
   <suspend/>
 
-    <loop label="DEM_MD_Loop" vars="DEM_MD_T" randomize="0" iterator="leasttaken">
-    <block label="b1">
-      <radio label="DEM_MD_T" atleast="1" adim="cols" grouping="cols" shuffle="rows"
+    <loop label="DEM_MD_Loop" vars="DEM_MD_T" randomize="0">
+    <block label="b2">
+      <radio label="DEM_MD_T" adim="cols" grouping="cols" shuffle="rows"
              ss:listDisplay="0" ss:questionClassNames="prism-maxdiff" unique="1">
         <title>Select the one statement that sounds <strong>MOST</strong> like your own point of view (on the left), and the statement that sounds <strong>LEAST</strong> like you (on the right)</title>
         <comment>Select one for MOST and one for LEAST</comment>
@@ -800,8 +770,8 @@ XDEM_VERSION.val = dem_version
 ]]></style>
       </radio>
 
-      <exec when="init">
-setupMaxDiffItemsI(DEM_DESIGN, dem_version, loopvar.DEM_MD_Loop.index + 1, DEM_MD_T)
+      <exec>
+setupMaxDiffItemsI(DEM_DESIGN, p.dem_version, loopvar.DEM_MD_Loop.index + 1, DEM_MD_T)
 </exec>
 
       <suspend/>
@@ -847,7 +817,11 @@ for rl in dem_item_labels:
             if row.worst:   # LEAST important
                 worst_count += 1
     dem_bw[rl] = best_count - worst_count
-    setattr(XDEM_BW, rl, {'c1': str(dem_bw[rl])})
+    getattr(XDEM_BW, rl).c1 = str(dem_bw[rl])
+
+# Persist for use in Z-standardization exec block
+p.dem_bw = dem_bw
+p.dem_item_labels = dem_item_labels
 </exec>
 
 </block>
@@ -860,8 +834,7 @@ for rl in dem_item_labels:
     </p>
   </html>
 
-  <radio label="vector_justice" atleast="1"
-         ss:questionClassNames="prism-semantic"
+  <radio label="vector_justice" ss:questionClassNames="prism-semantic"
          uses="leftright.1">
     <title>
       To what extent do you agree or disagree with the following statement?
@@ -883,8 +856,7 @@ for rl in dem_item_labels:
 
   <suspend/>
 
-  <radio label="vector_industry" atleast="1"
-         ss:questionClassNames="prism-semantic"
+  <radio label="vector_industry" ss:questionClassNames="prism-semantic"
          uses="leftright.1">
     <title>
       To what extent do you agree or disagree with the following statement?
@@ -955,6 +927,10 @@ for rl in dem_item_labels:
 </radio>
 
 <exec cond="TYPING_MODULE.r2 or TYPING_MODULE.r3">
+# Restore persisted BW scores
+dem_bw = p.dem_bw
+dem_item_labels = p.dem_item_labels
+
 # Get vector values
 # vector_justice: 1-7 scale, used directly
 justice_raw = 0
@@ -993,17 +969,21 @@ dem_distances = algorithmCalculation(dem_z, DEM_CENTROIDS, 10)
 # Store raw distances
 dem_seg_labels = ['r1', 'r2', 'r3', 'r4', 'r5', 'r6']
 for i, sl in enumerate(dem_seg_labels):
-    setattr(XDEM_RAW, sl, {'c1': '%.6f' % dem_distances[i]})
+    getattr(XDEM_RAW, sl).c1 = '%.6f' % dem_distances[i]
 
 # Compute softmax
 dem_softmax = softmaxFromDistances(dem_distances)
 for i, sl in enumerate(dem_seg_labels):
-    setattr(XDEM_SOFTMAX, sl, {'c1': '%.6f' % dem_softmax[i]})
+    getattr(XDEM_SOFTMAX, sl).c1 = '%.6f' % dem_softmax[i]
 
 # Find primary and runner-up segments
 dem_sorted = sorted(range(6), key=lambda x: dem_distances[x])
 XDEM_SEG_FINAL_1.val = dem_seg_labels[dem_sorted[0]]
 XDEM_SEG_FINAL_2.val = dem_seg_labels[dem_sorted[1]]
+
+# Persist for cross-model resolution
+p.dem_softmax = dem_softmax
+p.dem_distances = dem_distances
 </exec>
 
 <text label="XSOFTMAX_ALL" where="execute,survey,report" optional="1"
@@ -1065,18 +1045,22 @@ XDEM_SEG_FINAL_2.val = dem_seg_labels[dem_sorted[1]]
 
 <exec>
 # ---- Cross-model resolution ----
-# Build the full 16-element softmax vector
+# Restore persisted model results
 all_softmax = [0.0] * 16
 all_distances = [999999.0] * 16  # large default distances
 
 # Fill GOP segments (r1-r10) if GOP model was taken
 if TYPING_MODULE.r1 or TYPING_MODULE.r3:
+    gop_softmax = p.gop_softmax
+    gop_distances = p.gop_distances
     for i in range(10):
         all_softmax[i] = gop_softmax[i]
         all_distances[i] = gop_distances[i]
 
 # Fill DEM segments (r11-r16) if DEM model was taken
 if TYPING_MODULE.r2 or TYPING_MODULE.r3:
+    dem_softmax = p.dem_softmax
+    dem_distances = p.dem_distances
     for i in range(6):
         all_softmax[10 + i] = dem_softmax[i]
         all_distances[10 + i] = dem_distances[i]
@@ -1084,7 +1068,7 @@ if TYPING_MODULE.r2 or TYPING_MODULE.r3:
 # Store all 16 softmax values
 all_seg_labels = ['r%d' % (i + 1) for i in range(16)]
 for i in range(16):
-    setattr(XSOFTMAX_ALL, all_seg_labels[i], {'c1': '%.6f' % all_softmax[i]})
+    getattr(XSOFTMAX_ALL, all_seg_labels[i]).c1 = '%.6f' % all_softmax[i]
 
 # Find winning segment = highest softmax across all models taken
 best_idx = 0
@@ -1147,9 +1131,13 @@ else:
 
 <exec>
 # Store segment name and abbreviation
-seg_num = int(XSEG_ASSIGNED.val.replace('r', ''))
-XSEG_NAME.r1 = {'c1': SEGMENT_NAMES.get(seg_num, 'Unknown')}
-XSEG_ABBREV.r1 = {'c1': SEGMENT_ABBREVS.get(seg_num, '??')}
+raw_val = XSEG_ASSIGNED.val
+if isinstance(raw_val, str):
+    seg_num = int(raw_val.replace('r', ''))
+else:
+    seg_num = int(raw_val) + 1  # convert 0-based index to 1-based segment number
+XSEG_NAME.r1.c1 = SEGMENT_NAMES.get(seg_num, 'Unknown')
+XSEG_ABBREV.r1.c1 = SEGMENT_ABBREVS.get(seg_num, '??')
 </exec>
 
 <block label="segment_reveal" cond="standalone_mode == 1">
