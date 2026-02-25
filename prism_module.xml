@@ -1148,7 +1148,7 @@ XSEG_ABBREV.r1.c1 = SEGMENT_ABBREVS.get(seg_num, '??')
 <block label="segment_reveal" cond="standalone_mode == 1">
 
   <html label="segment_reveal_page" where="survey" ss:questionClassNames="prism-reveal">
-    <title>Your PRISM Health Segment</title>
+    <h2>Your PRISM Health Segment</h2>
     <p>Based on your responses, you have been assigned to the following health segment:</p>
     <div class="prism-segment-reveal">
       <div class="prism-segment-card">
