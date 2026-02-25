@@ -439,7 +439,7 @@ XGOP_VERSION.val = p.gop_version
 
   <suspend/>
 
-    <loop label="GOP_MD_Loop" vars="GOP_MD_T" randomize="0">
+    <loop label="GOP_MD_Loop" randomize="0">
     <block label="b1">
       <radio label="GOP_MD_T" adim="cols" grouping="cols" shuffle="rows"
              ss:listDisplay="0" ss:questionClassNames="prism-maxdiff">
@@ -526,17 +526,17 @@ setupMaxDiffItemsI(GOP_DESIGN, p.gop_version, loopvar.GOP_MD_Loop.index + 1, GOP
       <suspend/>
     </block>
 
-    <looprow label="l1"><loopvar name="GOP_MD_T">Task 1</loopvar></looprow>
-    <looprow label="l2"><loopvar name="GOP_MD_T">Task 2</loopvar></looprow>
-    <looprow label="l3"><loopvar name="GOP_MD_T">Task 3</loopvar></looprow>
-    <looprow label="l4"><loopvar name="GOP_MD_T">Task 4</loopvar></looprow>
-    <looprow label="l5"><loopvar name="GOP_MD_T">Task 5</loopvar></looprow>
-    <looprow label="l6"><loopvar name="GOP_MD_T">Task 6</loopvar></looprow>
-    <looprow label="l7"><loopvar name="GOP_MD_T">Task 7</loopvar></looprow>
-    <looprow label="l8"><loopvar name="GOP_MD_T">Task 8</loopvar></looprow>
-    <looprow label="l9"><loopvar name="GOP_MD_T">Task 9</loopvar></looprow>
-    <looprow label="l10"><loopvar name="GOP_MD_T">Task 10</loopvar></looprow>
-    <looprow label="l11"><loopvar name="GOP_MD_T">Task 11</loopvar></looprow>
+    <looprow label="l1"/>
+    <looprow label="l2"/>
+    <looprow label="l3"/>
+    <looprow label="l4"/>
+    <looprow label="l5"/>
+    <looprow label="l6"/>
+    <looprow label="l7"/>
+    <looprow label="l8"/>
+    <looprow label="l9"/>
+    <looprow label="l10"/>
+    <looprow label="l11"/>
   </loop>
 
         <text label="XGOP_BW" where="execute,survey,report" optional="1">
@@ -694,7 +694,7 @@ XDEM_VERSION.val = p.dem_version
 
   <suspend/>
 
-    <loop label="DEM_MD_Loop" vars="DEM_MD_T" randomize="0">
+    <loop label="DEM_MD_Loop" randomize="0">
     <block label="b2">
       <radio label="DEM_MD_T" adim="cols" grouping="cols" shuffle="rows"
              ss:listDisplay="0" ss:questionClassNames="prism-maxdiff">
@@ -778,14 +778,14 @@ setupMaxDiffItemsI(DEM_DESIGN, p.dem_version, loopvar.DEM_MD_Loop.index + 1, DEM
       <suspend/>
     </block>
 
-    <looprow label="l1"><loopvar name="DEM_MD_T">Task 1</loopvar></looprow>
-    <looprow label="l2"><loopvar name="DEM_MD_T">Task 2</loopvar></looprow>
-    <looprow label="l3"><loopvar name="DEM_MD_T">Task 3</loopvar></looprow>
-    <looprow label="l4"><loopvar name="DEM_MD_T">Task 4</loopvar></looprow>
-    <looprow label="l5"><loopvar name="DEM_MD_T">Task 5</loopvar></looprow>
-    <looprow label="l6"><loopvar name="DEM_MD_T">Task 6</loopvar></looprow>
-    <looprow label="l7"><loopvar name="DEM_MD_T">Task 7</loopvar></looprow>
-    <looprow label="l8"><loopvar name="DEM_MD_T">Task 8</loopvar></looprow>
+    <looprow label="l1"/>
+    <looprow label="l2"/>
+    <looprow label="l3"/>
+    <looprow label="l4"/>
+    <looprow label="l5"/>
+    <looprow label="l6"/>
+    <looprow label="l7"/>
+    <looprow label="l8"/>
   </loop>
 
         <text label="XDEM_BW" where="execute,survey,report" optional="1">
